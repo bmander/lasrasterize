@@ -10,7 +10,8 @@ setup(
         ],
     },
     install_requires=[
-        # Add your project dependencies here
+        'laspy==2.5.1',
+        'rasterio==1.3.9'
     ],
     author='Brandon Martin-Anderso',
     author_email='badhill@gmail.com',
