@@ -12,12 +12,12 @@ setup(
     install_requires=[
         # Add your project dependencies here
     ],
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Brandon Martin-Anderso',
+    author_email='badhill@gmail.com',
     description='A command line tool and associated library used to convert lidar LAS files into geotiff raster files.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/lasrasterize',
+    url='https://github.com/bmander/lasrasterize',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
