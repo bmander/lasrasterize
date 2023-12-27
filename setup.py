@@ -11,7 +11,8 @@ setup(
     },
     install_requires=[
         'laspy==2.5.1',
-        'rasterio==1.3.9'
+        'rasterio==1.3.9',
+        'numpy==1.26.2'
     ],
     author='Brandon Martin-Anderso',
     author_email='badhill@gmail.com',
