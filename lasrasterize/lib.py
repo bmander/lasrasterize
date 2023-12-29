@@ -5,7 +5,8 @@ from collections import namedtuple
 
 SQRT_TWO = 2**0.5
 
-BBox = namedtuple("BBox", ['left', 'bottom', 'right', 'top'])
+BBox = namedtuple("BBox", ["left", "bottom", "right", "top"])
+
 
 class PointCloud:
     """A lidar PointCloud, with points, intensity, return_nums, and num_returns per point."""
@@ -23,7 +24,7 @@ class PointCloud:
         ret = cls()
 
         ret.points = np.column_stack((las.x, las.y, las.z))
-        ret.intensity = np.array(las.intensity)/255.0
+        ret.intensity = np.array(las.intensity) / 255.0
         ret.return_num = np.array(las.return_num)
 
         # cast to signed into so subtraction can result in negative numbers
@@ -55,13 +56,13 @@ class PointCloud:
         number counting from the last return, e.g. -1 filters to last-return
         points."""
 
-        if layer==0:
+        if layer == 0:
             raise ValueError("Layer must be positive or negative, not zero.")
 
         if layer < 0:
             layer = self.num_returns + layer + 1
 
-        mask = (self.return_num == layer)
+        mask = self.return_num == layer
 
         ret = PointCloud()
         ret.points = self.points[mask]
@@ -71,9 +72,10 @@ class PointCloud:
 
         return ret
 
+
 def las_to_raster(las_file, raster_file):
     # Load LAS file
-    las = laspy.file.File(las_file, mode='r')
+    las = laspy.file.File(las_file, mode="r")
 
     # Get coordinates
     x = las.x
@@ -84,7 +86,15 @@ def las_to_raster(las_file, raster_file):
     data = np.zeros((len(x), len(y)))
 
     # Save as raster
-    with rasterio.open(raster_file, 'w', driver='GTiff', height=data.shape[0], width=data.shape[1], count=1, dtype=str(data.dtype)) as dst:
+    with rasterio.open(
+        raster_file,
+        "w",
+        driver="GTiff",
+        height=data.shape[0],
+        width=data.shape[1],
+        count=1,
+        dtype=str(data.dtype),
+    ) as dst:
         dst.write(data, 1)
 
     print(f"Raster file saved as {raster_file}")
