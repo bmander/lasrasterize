@@ -3,6 +3,7 @@ import rasterio
 import numpy as np
 from collections import namedtuple
 from scipy import ndimage as nd
+from typing import Union
 
 SQRT_TWO = 2**0.5
 
@@ -19,8 +20,8 @@ class PointCloud:
         self.num_returns = None
 
     @classmethod
-    def _from_lasdata(cls, las: laspy.LasData):
-        """Instantiate class from LASData object."""
+    def _from_lasdata(cls, las: laspy.LasData) -> "PointCloud":
+        """Instantiates a PointCloud object from a LASData object."""
 
         ret = cls()
 
@@ -34,7 +35,7 @@ class PointCloud:
         return ret
 
     @classmethod
-    def from_laspy(cls, laspy_filename: str):
+    def from_laspy(cls, laspy_filename: str) -> "PointCloud":
         """Instantiate class from LASData file."""
 
         with laspy.open(laspy_filename) as laspy_file:
@@ -43,19 +44,30 @@ class PointCloud:
             return cls._from_lasdata(las)
 
     @property
-    def bbox(self):
-        """Finds horizontal bounding box."""
+    def bbox(self) -> BBox:
+        """Returns a BBox object representing the bounding box of the point"""
 
         left, bottom, _ = self.points.min(axis=0)
         right, top, _ = self.points.max(axis=0)
         return BBox(left, bottom, right, top)
 
-    def get_layer(self, layer):
-        """Returns a new PointCloud consisting of only points from a given
-        layer. If 'layer' is positive, returns points with the corresponding
-        return number. If 'layer' is negative, returns points with a return
-        number counting from the last return, e.g. -1 filters to last-return
-        points."""
+    def get_layer(self, layer: int) -> "PointCloud":
+        """Returns a new PointCloud consisting of only points from a given layer.
+
+        If 'layer' is positive, returns points with the corresponding return number.
+        If 'layer' is negative, returns points with a return number counting from the last return,
+        e.g. -1 filters to last-return points.
+
+        Args:
+            layer (int): The layer number. Positive values correspond to the return number,
+                         negative values count from the last return.
+
+        Returns:
+            PointCloud: A new PointCloud object consisting of only points from the specified layer.
+
+        Raises:
+            ValueError: If the layer is zero.
+        """
 
         if layer == 0:
             raise ValueError("Layer must be positive or negative, not zero.")
@@ -74,10 +86,17 @@ class PointCloud:
         return ret
 
 
-def fillholes(mat, radius=1):
-    """Fill holes in matrix A.
+def fillholes(mat, radius: int = 1) -> np.ndarray:
+    """Fills holes in the input matrix.
 
-    For each element in 'mat' that is nan, fill with the average of non-nan values within a given radius.
+    For each element in 'mat' that is nan, this function fills it with the average of non-nan values within a given radius.
+
+    Args:
+        mat (np.ndarray): The input matrix with potential nan values.
+        radius (int, optional): The radius within which to average non-nan values. Defaults to 1.
+
+    Returns:
+        np.ndarray: The input matrix with nan values filled.
     """
 
     if radius == 0:
@@ -103,9 +122,25 @@ def fillholes(mat, radius=1):
     return ret
 
 
-def pointcloud_to_rasters(point_cloud, bbox, xres, yres, fill_radius):
-    """Convert a PointCloud object into a pair of rasters. Returns
-    a tuple like ({theme_name:raster}, (width, height))"""
+def pointcloud_to_rasters(
+    point_cloud: PointCloud,
+    bbox: BBox,
+    xres: int | float,
+    yres: int | float,
+    fill_radius: int,
+) -> tuple[dict[str, np.ma.array], tuple[int, int]]:
+    """Converts a PointCloud object into a pair of rasters.
+
+    Args:
+        point_cloud (PointCloud): The point cloud to convert.
+        bbox (BBox): The bounding box to use for the conversion, in map units.
+        xres (int | float): The resolution in the x direction, in map units.
+        yres (int | float): The resolution in the y direction, in map units.
+        fill_radius (int): The radius to use when filling holes, in pixels.
+
+    Returns:
+        tuple: A tuple of (rasters, shape). 'rasters' is a dictionary of rasters, with keys 'elev' and 'intensity'. 'shape' is a tuple of (n_cols, n_rows).
+    """
 
     n_rows = int((bbox.top - bbox.bottom) / yres) + 1
     n_cols = int((bbox.right - bbox.left) / xres) + 1
