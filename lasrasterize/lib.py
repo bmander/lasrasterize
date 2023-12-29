@@ -2,6 +2,7 @@ import laspy
 import rasterio
 import numpy as np
 from collections import namedtuple
+from scipy import ndimage as nd
 
 SQRT_TWO = 2**0.5
 
@@ -71,6 +72,35 @@ class PointCloud:
         ret.num_returns = self.num_returns[mask]
 
         return ret
+
+
+def fillholes(mat, radius=1):
+    """Fill holes in matrix A.
+
+    For each element in 'mat' that is nan, fill with the average of non-nan values within a given radius.
+    """
+
+    if radius == 0:
+        return mat
+
+    mat = mat.copy()
+
+    nans = np.isnan(mat)
+    valid_mask = np.logical_not(nans).astype(int)
+
+    mat[nans] = 0
+
+    kernel = np.ones((2 * radius + 1, 2 * radius + 1))
+    neighbor_sum = nd.convolve(mat, kernel)
+    neighbor_valid = nd.convolve(valid_mask, kernel)
+
+    # Element-wise division, but ensure x/0 is nan
+    with np.errstate(divide="ignore", invalid="ignore"):
+        mat_mean = neighbor_sum / neighbor_valid
+
+    ret = np.where(nans, mat_mean, mat)
+
+    return ret
 
 
 def las_to_raster(las_file, raster_file):
