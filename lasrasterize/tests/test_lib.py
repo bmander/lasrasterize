@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from lasrasterize.lib import PointCloud, fillholes
+from lasrasterize.lib import PointCloud, fillholes, pointcloud_to_rasters, BBox
 import os
 
 
@@ -84,6 +84,61 @@ class TestFillHoles(unittest.TestCase):
         expected = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
         result = fillholes(mat, radius=0)
         np.testing.assert_array_equal(result, expected)
+
+
+class TestPointCloudToRasters(unittest.TestCase):
+    def setUp(self):
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        test_las_filename = os.path.join(test_data_dir, "sine.las")
+
+        self.point_cloud = PointCloud.from_laspy(test_las_filename)
+
+    def test_pointcloud_to_rasters(self):
+        rasters, shape = pointcloud_to_rasters(
+            self.point_cloud, BBox(0, 0, 10, 10), 1, 1, 1
+        )
+        assert "elev" in rasters
+        assert "intensity" in rasters
+
+        np.testing.assert_array_almost_equal(
+            rasters["elev"][0],
+            np.array(
+                [
+                    -0.13,
+                    -0.264,
+                    -0.8,
+                    -0.515,
+                    -0.98,
+                    -0.835,
+                    -0.783333,
+                    -0.445,
+                    0.06,
+                    -0.02,
+                    -0.18,
+                ]
+            ),
+        )
+
+        np.testing.assert_array_almost_equal(
+            rasters["intensity"][0],
+            np.array(
+                [
+                    257.0,
+                    205.59451,
+                    256.976471,
+                    171.318301,
+                    256.968627,
+                    256.973529,
+                    256.975163,
+                    128.484314,
+                    0.0,
+                    85.666667,
+                    257.0,
+                ]
+            ),
+        )
 
 
 if __name__ == "__main__":

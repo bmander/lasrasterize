@@ -103,6 +103,36 @@ def fillholes(mat, radius=1):
     return ret
 
 
+def pointcloud_to_rasters(point_cloud, bbox, xres, yres, fill_radius):
+    """Convert a PointCloud object into a pair of rasters. Returns
+    a tuple like ({theme_name:raster}, (width, height))"""
+
+    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
+    n_cols = int((bbox.right - bbox.left) / xres) + 1
+
+    # get grid position of each point
+    j = ((point_cloud.points[:, 0] - bbox.left) / xres).astype(int)
+    i = ((bbox.top - point_cloud.points[:, 1]) / yres).astype(int)
+
+    # set up nan-filled raster of the appropriate size
+    elev = np.full((n_rows, n_cols), np.nan)
+    intensity = np.full((n_rows, n_cols), np.nan)
+
+    # fill in grid positions with elevation information
+    # a large number of grid positions will not correspond
+    # to any lidar points and, as a result, will have NaN values
+    elev[i, j] = point_cloud.points[:, 2]
+    intensity[i, j] = point_cloud.intensity
+
+    elev = fillholes(elev, fill_radius)
+    intensity = fillholes(intensity, fill_radius)
+
+    return {
+        "elev": np.ma.array(elev, mask=np.isnan(elev)),
+        "intensity": np.ma.array(intensity, mask=np.isnan(intensity)),
+    }, (n_cols, n_rows)
+
+
 def las_to_raster(las_file, raster_file):
     # Load LAS file
     las = laspy.file.File(las_file, mode="r")
