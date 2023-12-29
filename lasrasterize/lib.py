@@ -1,9 +1,10 @@
+from typing import Iterable
 import laspy
 import rasterio
 import numpy as np
 from collections import namedtuple
 from scipy import ndimage as nd
-from typing import Union
+from collections import defaultdict
 
 SQRT_TWO = 2**0.5
 
@@ -36,7 +37,7 @@ class PointCloud:
 
     @classmethod
     def from_laspy(cls, laspy_filename: str) -> "PointCloud":
-        """Instantiate class from LASData file."""
+        """Instantiates a PointCloud object from a LAS file."""
 
         with laspy.open(laspy_filename) as laspy_file:
             las = laspy_file.read()
@@ -166,6 +167,62 @@ def pointcloud_to_rasters(
         "elev": np.ma.array(elev, mask=np.isnan(elev)),
         "intensity": np.ma.array(intensity, mask=np.isnan(intensity)),
     }, (n_cols, n_rows)
+
+
+def lidar_to_rasters(
+    las_filename: str,
+    layers: Iterable[int],
+    xres: int | float,
+    yres: int | float,
+    fill_radius: int,
+) -> tuple[dict[str, np.ndarray], BBox, tuple[int, int]]:
+    """Converts a LAS file to rasters.
+
+    This function takes a LAS file and an iterable of layers, and converts each layer into a raster.
+    The rasters are returned along with the bounding box and the shape of the rasters.
+
+    Args:
+        las_file (laspy.file.File): The LAS file to convert.
+        layers (Iterable[int]): An iterable of numbers specifying which return values to convert into a layer.
+                                For example, (1, 2, -1) would result in layers for the first, second, and last LIDAR return.
+        xres (int | float): The resolution in the x direction.
+        yres (int | float): The resolution in the y direction.
+        fill_radius (int): The radius to use when filling holes.
+
+    Returns:
+        tuple: A tuple containing a dictionary mapping theme names to stacks of rasters, the bounding box, and a tuple containing the width and height of the rasters.
+               Each stack of rasters has shape (num_rasters, m, n), where num_rasters is the length of the 'layers' arg.
+    """
+
+    # get lidar points, intensity, return num, and number of returns for each
+    # pulse
+    point_cloud = PointCloud.from_laspy(las_filename)
+
+    # find bounding box of the data
+    bbox = point_cloud.bbox
+
+    # produce dict of {theme name -> list of rasters}, where the list has a raster
+    # for each layer in 'layers'.
+    raster_layers = defaultdict(list)
+    shape = None
+    for layer in layers:
+        layer_pc = point_cloud.get_layer(layer)
+
+        rasters, layer_shape = pointcloud_to_rasters(
+            layer_pc, bbox, xres, yres, fill_radius
+        )
+
+        # make sure the shape of every layer is the same
+        shape = shape or layer_shape
+        assert shape == layer_shape
+
+        for name, matrix in rasters.items():
+            raster_layers[name].append(matrix)
+
+    for name, layers in raster_layers.items():
+        raster_layers[name] = np.stack(layers).astype(np.float32)
+
+    return (raster_layers, bbox, shape)
 
 
 def las_to_raster(las_file, raster_file):

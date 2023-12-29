@@ -1,6 +1,12 @@
 import unittest
 import numpy as np
-from lasrasterize.lib import PointCloud, fillholes, pointcloud_to_rasters, BBox
+from lasrasterize.lib import (
+    PointCloud,
+    fillholes,
+    pointcloud_to_rasters,
+    BBox,
+    lidar_to_rasters,
+)
 import os
 
 
@@ -139,6 +145,70 @@ class TestPointCloudToRasters(unittest.TestCase):
                 ]
             ),
         )
+
+
+class TestLidarToRasters(unittest.TestCase):
+    def setUp(self):
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        test_las_filename = os.path.join(test_data_dir, "sine.las")
+
+        self.rasters, self.bbox, self.shape = lidar_to_rasters(
+            test_las_filename, [1, 2], 1, 1, 1
+        )
+
+    def test_lidar_to_rasters(self):
+        assert "elev" in self.rasters
+        assert "intensity" in self.rasters
+
+        np.testing.assert_array_almost_equal(
+            self.rasters["elev"][0, 0, :],
+            np.array(
+                [
+                    -0.13,
+                    -0.264,
+                    -0.8,
+                    -0.515,
+                    -0.98,
+                    -0.835,
+                    -0.783333,
+                    -0.445,
+                    0.06,
+                    -0.06,
+                ]
+            ),
+        )
+
+        self.assertTrue(np.all(np.isnan(self.rasters["elev"][1])))
+
+        np.testing.assert_array_almost_equal(
+            self.rasters["intensity"][0, 0, :],
+            np.array(
+                [
+                    257.0,
+                    205.59451,
+                    256.97647,
+                    171.3183,
+                    256.96863,
+                    256.97354,
+                    256.97516,
+                    128.48431,
+                    0.0,
+                    128.5,
+                ]
+            ),
+            decimal=5,
+        )
+
+        self.assertTrue(np.all(np.isnan(self.rasters["intensity"][1])))
+
+        self.assertEqual(self.bbox.left, 0.04)
+        self.assertEqual(self.bbox.bottom, 0.16)
+        self.assertEqual(self.bbox.right, 9.94)
+        self.assertEqual(self.bbox.top, 9.97)
+
+        self.assertEqual(self.shape, (10, 10))
 
 
 if __name__ == "__main__":
