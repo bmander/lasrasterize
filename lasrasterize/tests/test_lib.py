@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from lasrasterize.lib import PointCloud
-from unittest.mock import Mock
+import os
 
 class TestPointCloud(unittest.TestCase):
     def setUp(self):
@@ -37,18 +37,20 @@ class TestPointCloud(unittest.TestCase):
             self.point_cloud.get_layer(0)
 
     def test_from_laspy(self):
-        mock_laspy_file = Mock()
-        mock_laspy_file.points = {"point": {"X": np.array([1, 4, 7]), "Y": np.array([2, 5, 8]), "Z": np.array([3, 6, 9])}}
-        mock_laspy_file.header.scale = np.array([1, 1, 1])
-        mock_laspy_file.return_num = np.array([1, 2, 3])
-        mock_laspy_file.get_num_returns.return_value = np.array([3, 2, 1])
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        test_las_filename = os.path.join(test_data_dir, "test.las")
 
-        point_cloud = PointCloud.from_laspy(mock_laspy_file)
+        point_cloud = PointCloud.from_laspy(test_las_filename)
 
-        np.testing.assert_array_equal(point_cloud.points, self.point_cloud.points)
-        np.testing.assert_array_equal(point_cloud.intensity, self.point_cloud.intensity)
-        np.testing.assert_array_equal(point_cloud.return_num, self.point_cloud.return_num)
-        np.testing.assert_array_equal(point_cloud.num_returns, self.point_cloud.num_returns)
+        np.testing.assert_array_equal(point_cloud.points,  np.array([[0.01, 0.04, 0.07],
+ [0.02, 0.05, 0.08],
+ [0.03, 0.06, 0.09]]))
+        np.testing.assert_array_almost_equal(point_cloud.intensity, np.array([0. , 0.501961, 1. ]))
+        np.testing.assert_array_equal(point_cloud.return_num, np.array([1, 2, 2]))
+        np.testing.assert_array_equal(point_cloud.num_returns, np.array([1, 2, 3]))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,21 +17,28 @@ class PointCloud:
         self.num_returns = None
 
     @classmethod
-    def from_laspy(cls, laspy_file):
-        """Instantiate class from LAS file."""
+    def _from_lasdata(cls, las: laspy.LasData):
+        """Instantiate class from LASData object."""
 
         ret = cls()
 
-        pts = laspy_file.points["point"]
-        ret.points = np.column_stack((pts["X"], pts["Y"], pts["Z"]))*laspy_file.header.scale
-
-        ret.intensity = pts["intensity"]/255
-        ret.return_num = laspy_file.return_num
+        ret.points = np.column_stack((las.x, las.y, las.z))
+        ret.intensity = np.array(las.intensity)/255.0
+        ret.return_num = np.array(las.return_num)
 
         # cast to signed into so subtraction can result in negative numbers
-        ret.num_returns = laspy_file.get_num_returns().astype(int)
+        ret.num_returns = np.array(las.num_returns).astype(int)
 
         return ret
+
+    @classmethod
+    def from_laspy(cls, laspy_filename: str):
+        """Instantiate class from LASData file."""
+
+        with laspy.open(laspy_filename) as laspy_file:
+            las = laspy_file.read()
+
+            return cls._from_lasdata(las)
 
     @property
     def bbox(self):
