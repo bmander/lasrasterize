@@ -3,6 +3,7 @@ import numpy as np
 from lasrasterize.lib import PointCloud
 import os
 
+
 class TestPointCloud(unittest.TestCase):
     def setUp(self):
         self.point_cloud = PointCloud()
@@ -44,13 +45,16 @@ class TestPointCloud(unittest.TestCase):
 
         point_cloud = PointCloud.from_laspy(test_las_filename)
 
-        np.testing.assert_array_equal(point_cloud.points,  np.array([[0.01, 0.04, 0.07],
- [0.02, 0.05, 0.08],
- [0.03, 0.06, 0.09]]))
-        np.testing.assert_array_almost_equal(point_cloud.intensity, np.array([0. , 0.501961, 1. ]))
+        np.testing.assert_array_equal(
+            point_cloud.points,
+            np.array([[0.01, 0.04, 0.07], [0.02, 0.05, 0.08], [0.03, 0.06, 0.09]]),
+        )
+        np.testing.assert_array_almost_equal(
+            point_cloud.intensity, np.array([0.0, 0.501961, 1.0])
+        )
         np.testing.assert_array_equal(point_cloud.return_num, np.array([1, 2, 2]))
         np.testing.assert_array_equal(point_cloud.num_returns, np.array([1, 2, 3]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
