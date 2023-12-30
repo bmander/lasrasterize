@@ -7,9 +7,11 @@ from lasrasterize.lib import (
     BBox,
     lidar_to_rasters,
     to_geotiff,
+    infer_raster_resolution,
 )
 import os
 import rasterio as rio
+import math
 
 
 class TestPointCloud(unittest.TestCase):
@@ -249,6 +251,31 @@ class TestToGeoTiff(unittest.TestCase):
             np.testing.assert_almost_equal(ds.read(2), self.themes["elev"][1])
             np.testing.assert_almost_equal(ds.read(3), self.themes["intensity"][0])
             np.testing.assert_almost_equal(ds.read(4), self.themes["intensity"][1])
+
+
+class TestInferRasterResolution(unittest.TestCase):
+    def test_infer_raster_resolution(self):
+        # Create a mock LasData object
+        class MockLasData:
+            class MockHeader:
+                return_count = [100]
+                min = [0, 0, 0]
+                max = [10, 10, 0]
+
+            header = MockHeader()
+
+        las_file = MockLasData()
+
+        # Call the function with the mock object
+        result = infer_raster_resolution(las_file)
+
+        # Calculate the expected result
+        area = 10*10
+        specific_area = area / 100
+        expected_result = round(specific_area**0.5 * math.sqrt(2), 2)
+
+        # Assert that the result is as expected
+        self.assertEqual(result, expected_result)
 
 
 if __name__ == "__main__":

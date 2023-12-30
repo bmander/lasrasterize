@@ -277,6 +277,37 @@ def to_geotiff(
                 i += 1
 
 
+def infer_raster_resolution(las_file: laspy.LasData) -> float:
+    """
+    Infers the raster resolution of a given LAS file.
+
+    This function calculates the raster resolution by finding the number of points in the first return,
+    calculating the area of the bounding box of the LAS file, and then finding the area per point.
+    The resolution is then calculated as the width of a square with the same area as the area per point.
+
+    Args:
+        las_file (laspy.LasData): The LAS file for which to infer the raster resolution.
+
+    Returns:
+        float: The inferred raster resolution of the LAS file.
+    """
+
+    # find number of points in first return
+    first_return_count = las_file.header.return_count[0]
+
+    # find area of the bounding box of the LAS file
+    left, bottom, _ = las_file.header.min
+    right, top, _ = las_file.header.max
+    area = (right - left) * (top - bottom)
+
+    # find area per point
+    specific_area = area / first_return_count
+
+    res = round(specific_area**0.5 * SQRT_TWO, 2)
+
+    return res
+
+
 def las_to_raster(las_file, raster_file):
     # Load LAS file
     las = laspy.file.File(las_file, mode="r")
