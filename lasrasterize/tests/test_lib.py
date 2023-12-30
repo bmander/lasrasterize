@@ -6,8 +6,10 @@ from lasrasterize.lib import (
     pointcloud_to_rasters,
     BBox,
     lidar_to_rasters,
+    to_geotiff,
 )
 import os
+import rasterio as rio
 
 
 class TestPointCloud(unittest.TestCase):
@@ -209,6 +211,44 @@ class TestLidarToRasters(unittest.TestCase):
         self.assertEqual(self.bbox.top, 9.97)
 
         self.assertEqual(self.shape, (10, 10))
+
+        # FILEPATH: /workspaces/lasrasterize/lasrasterize/tests/test_lib.py
+
+
+class TestToGeoTiff(unittest.TestCase):
+    def setUp(self):
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        test_las_filename = os.path.join(test_data_dir, "sine.las")
+
+        self.themes, self.bbox, self.shape = lidar_to_rasters(
+            test_las_filename, [1, 2], 1, 1, 1
+        )
+
+        self.crs = "EPSG:2285"  # NAD83 / Washington North (ftUS)
+        self.fn_out = "test_output.tif"
+
+    def tearDown(self):
+        if os.path.exists(self.fn_out):
+            os.remove(self.fn_out)
+
+    def test_to_geotiff(self):
+        to_geotiff(self.themes, self.bbox, self.shape, self.crs, self.fn_out)
+
+        # Check if the file was created
+        self.assertTrue(os.path.exists(self.fn_out))
+
+        # Open the file and check its properties
+        with rio.open(self.fn_out) as ds:
+            self.assertEqual(ds.count, len(self.themes) * len(self.themes["elev"]))
+            self.assertEqual(ds.height, self.shape[1])
+            self.assertEqual(ds.width, self.shape[0])
+            self.assertEqual(ds.crs.to_string(), self.crs)
+
+            np.testing.assert_almost_equal(ds.read(1), self.themes["elev"][0])
+            np.testing.assert_almost_equal(ds.read(2), self.themes["elev"][1])
+            np.testing.assert_almost_equal(ds.read(3), self.themes["intensity"][0])
+            np.testing.assert_almost_equal(ds.read(4), self.themes["intensity"][1])
 
 
 if __name__ == "__main__":

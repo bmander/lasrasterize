@@ -1,6 +1,6 @@
-from typing import Iterable
+from typing import IO, Iterable
 import laspy
-import rasterio
+import rasterio as rio
 import numpy as np
 from collections import namedtuple
 from scipy import ndimage as nd
@@ -225,6 +225,58 @@ def lidar_to_rasters(
     return (raster_layers, bbox, shape)
 
 
+def to_geotiff(
+    themes: dict[str, np.ndarray],
+    bbox: BBox,
+    shape: tuple[int, int],
+    crs: str,
+    fn_out: str | IO,
+) -> None:
+    """Converts a processed LAS file to a GeoTiff.
+
+    Args:
+        themes (dict): A dictionary where the keys are theme names and the values are numpy arrays representing the theme layers with shape [n_layers, height, width].
+        bbox (BoundingBox): A BoundingBox object that defines the spatial extent of the output GeoTiff.
+        shape (tuple): A tuple defining the shape (width, height) of the output GeoTiff.
+        crs (str): A string defining the coordinate reference system, e.g., "+init=epsg:2926".
+        fn_out (str or file-like object): The filename our a file-like object to which to write the GeoTiff.
+
+    Returns:
+        None. The function writes directly to the file specified by `fn_out`.
+
+    """
+
+    width, height = shape
+    transform = rio.transform.from_bounds(
+        bbox.left, bbox.bottom, bbox.right, bbox.top, width, height
+    )
+
+    a_theme = list(themes.values())[0]
+
+    n_themes = len(themes)
+    n_layers = len(a_theme)
+
+    with rio.open(
+        fn_out,
+        "w",
+        driver="GTiff",
+        height=height,
+        width=width,
+        count=n_themes * n_layers,
+        dtype=a_theme.dtype,
+        crs=crs,
+        transform=transform,
+        compress="lzw",
+        nodata=np.nan,
+    ) as new_dataset:
+        i = 1
+        for theme_name, layers in themes.items():
+            print(f"writing theme:'{theme_name}'")
+            for layer in layers:
+                new_dataset.write(layer, i)
+                i += 1
+
+
 def las_to_raster(las_file, raster_file):
     # Load LAS file
     las = laspy.file.File(las_file, mode="r")
@@ -238,7 +290,7 @@ def las_to_raster(las_file, raster_file):
     data = np.zeros((len(x), len(y)))
 
     # Save as raster
-    with rasterio.open(
+    with rio.open(
         raster_file,
         "w",
         driver="GTiff",
