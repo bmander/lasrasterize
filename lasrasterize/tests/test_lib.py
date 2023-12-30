@@ -8,6 +8,7 @@ from lasrasterize.lib import (
     lidar_to_rasters,
     to_geotiff,
     infer_raster_resolution,
+    las_to_raster,
 )
 import os
 import rasterio as rio
@@ -258,7 +259,7 @@ class TestInferRasterResolution(unittest.TestCase):
         # Create a mock LasData object
         class MockLasData:
             class MockHeader:
-                return_count = [100]
+                number_of_points_by_return = [100]
                 min = [0, 0, 0]
                 max = [10, 10, 0]
 
@@ -270,12 +271,70 @@ class TestInferRasterResolution(unittest.TestCase):
         result = infer_raster_resolution(las_file)
 
         # Calculate the expected result
-        area = 10*10
+        area = 10 * 10
         specific_area = area / 100
         expected_result = round(specific_area**0.5 * math.sqrt(2), 2)
 
         # Assert that the result is as expected
         self.assertEqual(result, expected_result)
+
+
+class TestLasToRasters(unittest.TestCase):
+    def setUp(self):
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        self.test_las_filename = os.path.join(test_data_dir, "sine.las")
+
+        self.test_geotiff_filename = "test_output.tif"
+
+    def tearDown(self):
+        if os.path.exists(self.test_geotiff_filename):
+            os.remove(self.test_geotiff_filename)
+
+    def test_las_to_rasters(self):
+        las_to_raster(
+            self.test_las_filename,
+            self.test_geotiff_filename,
+            crs="EPSG:2285",
+            return_num=[1],
+            theme=["elev", "intensity"],
+        )
+
+        # Check if the file was created
+        self.assertTrue(os.path.exists(self.test_geotiff_filename))
+
+        # Open the file and check its properties
+        with rio.open(self.test_geotiff_filename) as ds:
+            self.assertEqual(ds.count, 2)
+            self.assertEqual(ds.height, 8)
+            self.assertEqual(ds.width, 8)
+            self.assertEqual(ds.crs.to_string(), "EPSG:2285")
+
+            expected = np.array(
+                [
+                    [-0.13, -0.8, -0.07, -0.98, -0.93, -0.78, 0.06, -0.5657143],
+                    [0.92, 0.65, 0.79, -0.46, -0.36, -0.97, -0.67, -0.48714286],
+                    [0.83, 0.5, 1.0, -0.0626087, 0.31, -0.22611111, -0.99, -0.505],
+                    [-1.0, -0.99, 0.16, 0.67, 0.58, 0.75, -0.98, -0.40428573],
+                    [-0.52, -0.91, -0.99, 0.3, 0.58, 0.51, -0.71, -0.32333332],
+                    [0.55, -0.3, -0.91, -0.33, 0.11, 0.95, -0.1, -0.15],
+                    [0.78, 0.86, -0.74, -0.025625, -0.069375, 0.07285714, -0.24, -0.51],
+                    [
+                        0.31133333,
+                        0.22461538,
+                        -0.01230769,
+                        0.01692308,
+                        -0.54,
+                        0.77,
+                        -0.08461539,
+                        -0.05461539,
+                    ],
+                ],
+                dtype=np.float32,
+            )
+
+            np.testing.assert_almost_equal(ds.read(1), expected)
 
 
 if __name__ == "__main__":

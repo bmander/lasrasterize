@@ -36,10 +36,13 @@ class PointCloud:
         return ret
 
     @classmethod
-    def from_laspy(cls, laspy_filename: str) -> "PointCloud":
+    def from_laspy(cls, laspy_file: str | laspy.LasData) -> "PointCloud":
         """Instantiates a PointCloud object from a LAS file."""
 
-        with laspy.open(laspy_filename) as laspy_file:
+        if isinstance(laspy_file, laspy.LasData):
+            return cls._from_lasdata(laspy_file)
+
+        with laspy.open(laspy_file) as laspy_file:
             las = laspy_file.read()
 
             return cls._from_lasdata(las)
@@ -293,7 +296,7 @@ def infer_raster_resolution(las_file: laspy.LasData) -> float:
     """
 
     # find number of points in first return
-    first_return_count = las_file.header.return_count[0]
+    first_return_count = las_file.header.number_of_points_by_return[0]
 
     # find area of the bounding box of the LAS file
     left, bottom, _ = las_file.header.min
@@ -308,28 +311,53 @@ def infer_raster_resolution(las_file: laspy.LasData) -> float:
     return res
 
 
-def las_to_raster(las_file, raster_file):
-    # Load LAS file
-    las = laspy.file.File(las_file, mode="r")
+def las_to_raster(
+    file_in: str,
+    file_out: str,
+    crs: str,
+    return_num: list[int],
+    theme: list[str],
+    xres: float = None,
+    yres: float = None,
+    fill_radius: int = 2,
+) -> None:
+    """Convert LAS file to GeoTIFF raster.
 
-    # Get coordinates
-    x = las.x
-    y = las.y
-    z = las.z
+    Args:
+        file_in (str): Input LAS filename.
+        file_out (str): Output GeoTIFF filename.
+        crs (str): Coordinate reference system in whatever format
+            is accepted by the rasterio file constuctor. E.g. 'epsg:2926'.
+        return_num (list[int]): Return number(s) to rasterize, each in their own layer.
+            Negative numbers indicate position relative to last return; e.g. -1 is the last return.
+        theme (list[str]): Theme(s) to inclide. Choices are 'elev' and 'intensity'.
+        xres (float, optional): Width of one pixel in output GeoTIFF, in the horizontal
+            units of the CRS. If omitted, the LAS file will be used to make a reasonable guess.
+        yres (float, optional): Height of one pizel in output GeoTIFF, in the horizontal
+            units of the CRS. If omitted, the LAS file will be used to make a reasonable guess.
+        fill_radius (int, optional): Fill raster holes with average values within FILL_RADIUS pixels.
+    """
 
-    # Create a raster data array (this is a placeholder, you'll need to implement the actual conversion)
-    data = np.zeros((len(x), len(y)))
+    with laspy.open(file_in) as f:
+        las_data = f.read()
 
-    # Save as raster
-    with rio.open(
-        raster_file,
-        "w",
-        driver="GTiff",
-        height=data.shape[0],
-        width=data.shape[1],
-        count=1,
-        dtype=str(data.dtype),
-    ) as dst:
-        dst.write(data, 1)
+        default_res = infer_raster_resolution(las_data)
 
-    print(f"Raster file saved as {raster_file}")
+        xres = xres or default_res
+        yres = yres or default_res
+
+        themes, bbox, shape = lidar_to_rasters(
+            las_data,
+            layers=return_num,
+            xres=xres,
+            yres=yres,
+            fill_radius=fill_radius,
+        )
+
+        themes = {
+            theme_name: layers
+            for theme_name, layers in themes.items()
+            if theme_name in theme
+        }
+
+        to_geotiff(themes, bbox, shape, crs, file_out)
