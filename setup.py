@@ -13,7 +13,7 @@ setup(
         "laspy==2.5",
         "rasterio>=1.2.10,<=1.3.9",
         "numpy>=1.21,<=1.24",
-        "scipy==1.10",
+        "scipy>=1.7,<=1.10",
     ],
     author="Brandon Martin-Anderso",
     author_email="badhill@gmail.com",
