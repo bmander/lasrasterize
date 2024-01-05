@@ -7,7 +7,7 @@
 To install `lasrasterize`, clone the repository and run the setup script:
 
 ```bash
-git clone https://github.com/yourusername/lasrasterize.git
+git clone https://github.com/bmander/lasrasterize.git
 cd lasrasterize
 pip install .
 ```
