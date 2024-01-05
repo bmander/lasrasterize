@@ -1,20 +1,21 @@
-from typing import IO, Iterable
-import laspy
-import rasterio as rio
-import numpy as np
 from collections import namedtuple
+from typing import Iterable
+
+import laspy
+import numpy as np
+import rasterio as rio
 from scipy import ndimage as nd
-from collections import defaultdict
 
 
 BBox = namedtuple("BBox", ["left", "bottom", "right", "top"])
-Layerdef = namedtuple("Laslayer_definition", ["pulse_return", "intensity"])
-Layerdef.__doc__ = """Defines a layer of a LAS file.
 
-Args:
-    pulse_return (int): The pulse return included in this layer. Positive values count from the first return, negative values count from the last return.
-    intensity (bool): Whether to output a raster of intensity values.
-"""
+
+class Layerdef(namedtuple("Laslayer_definition", ["pulse_return", "intensity"])):
+    """Defines a layer of a LAS file.
+
+    Args:
+        pulse_return (int): The pulse return included in this layer. Positive values count from the first return, negative values count from the last return.
+        intensity (bool): Whether to output a raster of intensity values."""
 
 
 def infer_raster_resolution(lasdata: laspy.LasData, p: float = 0.95) -> float:
