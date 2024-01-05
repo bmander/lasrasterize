@@ -10,7 +10,6 @@ from lasrasterize.lib import (
 )
 import os
 import rasterio as rio
-import math
 import laspy
 
 
