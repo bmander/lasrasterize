@@ -42,14 +42,15 @@ class TestFillHoles(unittest.TestCase):
 
 
 class TestInferRasterResolution(unittest.TestCase):
-    def test_infer_raster_resolution(self):
+    def setUp(self):
         # construct filename from the position of this test file
         test_dir = os.path.dirname(os.path.realpath(__file__))
         test_data_dir = os.path.join(test_dir, "data")
-        test_las_filename = os.path.join(test_data_dir, "sine.las")
+        self.test_las_filename = os.path.join(test_data_dir, "sine.las")
 
+    def test_infer_raster_resolution(self):
         # open the test file
-        with laspy.open(test_las_filename) as f:
+        with laspy.open(self.test_las_filename) as f:
             lasdata = f.read()
 
             # infer the raster resolution
