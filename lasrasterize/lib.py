@@ -117,36 +117,25 @@ def lasdata_to_rasters(
         np.ndarray: An float array containing the elevation or intensity raster, with shape (n_layers, m, n). Null values are filled with np.nan.
     """
 
-    # find bounding box of the data
-    bbox = (
-        lasdata.header.x_min,
-        lasdata.header.y_min,
-        lasdata.header.x_max,
-        lasdata.header.y_max,
-    )
-
-    if xres is None or yres is None:
-        xres = yres = infer_raster_resolution(lasdata)
-
     n_rows = int((bbox.top - bbox.bottom) / yres) + 1
     n_cols = int((bbox.right - bbox.left) / xres) + 1
 
-    i = ((bbox.top - lasdata.y) / yres).astype(int)
-    j = ((lasdata.x - bbox.left) / xres).astype(int)
+    i = ((bbox.top - np.array(lasdata.y)) / yres).astype(int)
+    j = ((np.array(lasdata.x) - bbox.left) / xres).astype(int)
 
     # set up nan-filled raster of the appropriate size
     rasters = np.full((len(layer_defs), n_rows, n_cols), np.nan)
 
     for k, layer_def in enumerate(layer_defs):
         # get a mask to filter out points that don't belong in this layer
-        if layer_def.layer < 0:
+        if layer_def.pulse_return < 0:
             abs_pulse_return = lasdata.num_returns + layer_def.pulse_return + 1
         else:
             abs_pulse_return = layer_def.pulse_return
         mask = (lasdata.return_num == abs_pulse_return).astype(bool)
 
         # get grid position of each point
-        i, j = lasdata.i[mask], lasdata.i[mask]
+        i_layer, j_layer = i[mask], j[mask]
 
         # set up nan-filled raster of the appropriate size
         raster = np.full((n_rows, n_cols), np.nan)
@@ -155,9 +144,9 @@ def lasdata_to_rasters(
         # a large number of grid positions will not correspond
         # to any lidar points and, as a result, will have NaN values
         if layer_def.intensity:
-            raster[i, j] = lasdata.intensity[mask]
+            raster[i_layer, j_layer] = lasdata.intensity[mask]
         else:
-            raster[i, j] = lasdata.z[mask]
+            raster[i_layer, j_layer] = lasdata.z[mask]
 
         if fill_holes:
             raster = fillholes(raster, fill_radius)
@@ -199,7 +188,7 @@ def lasfile_to_geotiff(
     lasdata: laspy.LasData = laspy.read(las_filename)
 
     # find bounding box of the data
-    bbox = (
+    bbox = BBox(
         lasdata.header.x_min,
         lasdata.header.y_min,
         lasdata.header.x_max,

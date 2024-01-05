@@ -4,6 +4,8 @@ from lasrasterize.lib import (
     fillholes,
     BBox,
     infer_raster_resolution,
+    Layerdef,
+    lasdata_to_rasters,
 )
 import os
 import rasterio as rio
@@ -60,15 +62,33 @@ class TestInferRasterResolution(unittest.TestCase):
             self.assertAlmostEqual(resolution, 1.7057, places=2)
 
 
-class TestLidarToRasters(unittest.TestCase):
+class TestLasdataToRasters(unittest.TestCase):
     def setUp(self):
         # construct filename from the position of this test file
         test_dir = os.path.dirname(os.path.realpath(__file__))
         test_data_dir = os.path.join(test_dir, "data")
-        test_las_filename = os.path.join(test_data_dir, "sine.las")
+        self.test_las_filename = os.path.join(test_data_dir, "test.las")
 
-    def test_lidar_to_rasters(self):
-        pass
+    def test_lasdata_to_rasters(self):
+        # open the test file
+        with laspy.open(self.test_las_filename) as f:
+            lasdata = f.read()
+
+            # create a layer definition
+            layer_def = Layerdef(pulse_return=1, intensity=False)
+
+            # convert the lasdata to rasters
+            rasters = lasdata_to_rasters(
+                lasdata, BBox(0, 0, 0.1, 0.1), [layer_def], 0.01, 0.01
+            )
+
+            # assert that the rasters are the correct shape
+            self.assertEqual(rasters.shape, (1, 11, 11))
+
+            # assert that the rasters are the correct type
+            self.assertEqual(rasters.dtype, np.float64)
+
+            self.assertAlmostEqual(rasters[0, 4, 0], 0.07)
 
 
 if __name__ == "__main__":
