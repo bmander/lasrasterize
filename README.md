@@ -9,25 +9,24 @@ To install `lasrasterize`, clone the repository and run the setup script:
 ```bash
 git clone https://github.com/yourusername/lasrasterize.git
 cd lasrasterize
-python setup.py install
+pip install .
 ```
 
 ## Usage
 
-You can use `lasrasterize` from the command line as follows:
+Consult the `lasrasterize` help:
 
 ```bash
-lasrasterize input.las output.tif
+lasrasterize --help
 ```
 
-This will convert the input LAS file into a geotiff raster file.
 
 ## Development
 
-To run the unit tests, use the following command:
+To run the unit tests, use the following command from the base directory:
 
 ```bash
-python -m unittest discover lasrasterize
+pytest .
 ```
 
 ## License
