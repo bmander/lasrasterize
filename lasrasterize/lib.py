@@ -17,7 +17,7 @@ Args:
 """
 
 
-def infer_raster_resolution(las_file: laspy.LasData, p: float = 0.95) -> float:
+def infer_raster_resolution(lasdata: laspy.LasData, p: float = 0.95) -> float:
     """
     Infers the raster resolution of a given LAS file.
 
@@ -26,7 +26,7 @@ def infer_raster_resolution(las_file: laspy.LasData, p: float = 0.95) -> float:
     equal to the given probability p. For a point density of 1.0 and p=0.95, a pixel width will be about 1.73.
 
     Args:
-        las_file (laspy.LasData): The LAS file for which to infer the raster resolution.
+        lasdata (laspy.LasData): The LAS file for which to infer the raster resolution.
         p (float, optional): The probability that a given raster cell will contain at least one point.
 
     Returns:
@@ -37,11 +37,11 @@ def infer_raster_resolution(las_file: laspy.LasData, p: float = 0.95) -> float:
         raise ValueError("p must be between 0 and 1")
 
     # find number of points in first return
-    first_return_count = las_file.header.number_of_points_by_return[0]
+    first_return_count = lasdata.header.number_of_points_by_return[0]
 
     # find area of the bounding box of the LAS file
-    left, bottom, _ = las_file.header.min
-    right, top, _ = las_file.header.max
+    left, bottom, _ = lasdata.header.min
+    right, top, _ = lasdata.header.max
     area = (right - left) * (top - bottom)
 
     # find density of points in first return

@@ -8,6 +8,7 @@ from lasrasterize.lib import (
 import os
 import rasterio as rio
 import math
+import laspy
 
 
 class TestFillHoles(unittest.TestCase):
@@ -38,6 +39,24 @@ class TestFillHoles(unittest.TestCase):
         expected = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
         result = fillholes(mat, radius=0)
         np.testing.assert_array_equal(result, expected)
+
+
+class TestInferRasterResolution(unittest.TestCase):
+    def test_infer_raster_resolution(self):
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        test_las_filename = os.path.join(test_data_dir, "sine.las")
+
+        # open the test file
+        with laspy.open(test_las_filename) as f:
+            lasdata = f.read()
+
+            # infer the raster resolution
+            resolution = infer_raster_resolution(lasdata)
+
+            # assert that the resolution is about 1.73
+            self.assertAlmostEqual(resolution, 1.7057, places=2)
 
 
 class TestLidarToRasters(unittest.TestCase):
