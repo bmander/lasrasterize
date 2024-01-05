@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Iterable
+from typing import Iterable, Optional, Union
 
 import laspy
 import numpy as np
@@ -98,8 +98,8 @@ def lasdata_to_rasters(
     lasdata: laspy.LasData,
     bbox: BBox,
     layer_defs: Iterable[Layerdef],
-    xres: int | float,
-    yres: int | float,
+    xres: Union[int, float],
+    yres: Union[int, float],
     fill_holes: bool = True,
     fill_radius: int = 2,
 ) -> np.ndarray:
@@ -161,8 +161,8 @@ def lasfile_to_geotiff(
     las_filename: str,
     geotiff_filename: str,
     layer_defs: Iterable[Layerdef],
-    xres: int | float | None = None,
-    yres: int | float | None = None,
+    xres: Optional[Union[int, float]] = None,
+    yres: Optional[Union[int, float]] = None,
     fill_radius: int = 2,
     crs: str = None,
 ) -> None:
