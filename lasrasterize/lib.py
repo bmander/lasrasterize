@@ -10,25 +10,40 @@ from scipy import ndimage as nd
 BBox = namedtuple("BBox", ["left", "bottom", "right", "top"])
 
 
-class Layerdef(namedtuple("Laslayer_definition", ["pulse_return", "intensity"])):
+class Layerdef(namedtuple("Laslayer_definition",
+                          ["pulse_return", "intensity"])):
     """Defines a layer of a LAS file.
 
     Args:
-        pulse_return (int): The pulse return included in this layer. Positive values count from the first return, negative values count from the last return.
+        pulse_return (int): The pulse return included in this layer. Positive
+          values count from the first return, negative values count from the
+          last return.
         intensity (bool): Whether to output a raster of intensity values."""
+
+
+def resolution(p: float, rho: float) -> float:
+    """Find the length of the side of a square that has probability p of
+    containing at last one point given a point density of rho. Derived from
+    the poisson distribution.
+    """
+    return np.sqrt(np.log(1 - p) / -rho)
 
 
 def infer_raster_resolution(lasdata: laspy.LasData, p: float = 0.95) -> float:
     """
     Infers the raster resolution of a given LAS file.
 
-    This function uses the first return of the LAS file to infer the raster resolution. The resolution is chosen such that,
-    assuming a uniform distribution of points, the probability that a given raster cell will contain at least one point is
-    equal to the given probability p. For a point density of 1.0 and p=0.95, a pixel width will be about 1.73.
+    This function uses the first return of the LAS file to infer the raster
+    resolution. The resolution is chosen such that, assuming a uniform
+    distribution of points, the probability that a given raster cell will
+    contain at least one point is equal to the given probability p. For a
+    point density of 1.0 and p=0.95, a pixel width will be about 1.73.
 
     Args:
-        lasdata (laspy.LasData): The LAS file for which to infer the raster resolution.
-        p (float, optional): The probability that a given raster cell will contain at least one point.
+        lasdata (laspy.LasData): The LAS file for which to infer the raster
+          resolution.
+        p (float, optional): The probability that a given raster cell will
+          contain at least one point.
 
     Returns:
         float: The inferred raster resolution of the LAS file.
@@ -48,21 +63,19 @@ def infer_raster_resolution(lasdata: laspy.LasData, p: float = 0.95) -> float:
     # find density of points in first return
     density = first_return_count / area
 
-    # this function finds the length of the side of a square that has probability p of containing at last one point given a point density of rho
-    # it's derived from the poisson distribution
-    resolution = lambda p, rho: np.sqrt(np.log(1 - p) / -rho)
-
     return resolution(p, density)
 
 
 def fillholes(mat, radius: int = 1) -> np.ndarray:
     """Fills holes in the input matrix.
 
-    For each element in 'mat' that is nan, this function fills it with the average of non-nan values within a given radius.
+    For each element in 'mat' that is nan, this function fills it with the
+    average of non-nan values within a given radius.
 
     Args:
         mat (np.ndarray): The input matrix with potential nan values.
-        radius (int, optional): The radius within which to average non-nan values. Defaults to 1.
+        radius (int, optional): The radius within which to average non-nan
+          values. Defaults to 1.
 
     Returns:
         np.ndarray: The input matrix with nan values filled.
@@ -110,12 +123,17 @@ def lasdata_to_rasters(
         bbox (BBox): The bounding box to use for the conversion, in map units.
         xres (int | float): The resolution in the x direction, in map units.
         yres (int | float): The resolution in the y direction, in map units.
-        layer_defs (Iterable[Laslayer_definition]): An iterable of Laslayer_definition objects, each defining a layer to output.
-        fill_holes (bool, optional): Whether to fill holes in the raster. Defaults to True.
-        fill_radius (int, optional): The radius to use when filling holes, in pixels.
+        layer_defs (Iterable[Laslayer_definition]): An iterable of
+          Laslayer_definition objects, each defining a layer to output.
+        fill_holes (bool, optional): Whether to fill holes in the raster.
+          Defaults to True.
+        fill_radius (int, optional): The radius to use when filling holes, in
+          pixels.
 
     Returns:
-        np.ndarray: An float array containing the elevation or intensity raster, with shape (n_layers, m, n). Null values are filled with np.nan.
+        np.ndarray: An float array containing the elevation or intensity
+          raster, with shape (n_layers, m, n). Null values are filled with
+          np.nan.
     """
 
     n_rows = int((bbox.top - bbox.bottom) / yres) + 1
@@ -171,11 +189,18 @@ def lasfile_to_geotiff(
     Args:
         las_filename (str): The path to the LAS file to convert.
         geotiff_filename (str): The path to the GeoTiff to output.
-        layer_defs (Iterable[Laslayer_definition]): An iterable of Laslayer_definition objects, each defining a layer to output.
-        xres (int | float | None, optional): The resolution in the x direction, in map units. If None, the resolution will be inferred from the LAS file. Defaults to None.
-        yres (int | float | None, optional): The resolution in the y direction, in map units. If None, the resolution will be inferred from the LAS file. Defaults to None.
-        fill_radius (int, optional): The radius to use when filling holes, in pixels.
-        crs (str, optional): The CRS of the output GeoTiff. If None, the CRS will be inferred from the LAS file. Defaults to None.
+        layer_defs (Iterable[Laslayer_definition]): An iterable of
+          Laslayer_definition objects, each defining a layer to output.
+        xres (int | float | None, optional): The resolution in the x
+          direction, in map units. If None, the resolution will be inferred
+          from the LAS file. Defaults to None.
+        yres (int | float | None, optional): The resolution in the y
+          direction, in map units. If None, the resolution will be inferred
+          from the LAS file. Defaults to None.
+        fill_radius (int, optional): The radius to use when filling holes, in
+          pixels.
+        crs (str, optional): The CRS of the output GeoTiff. If None, the CRS
+          will be inferred from the LAS file. Defaults to None.
 
     Raises:
         ValueError: If xres or yres is negative.
@@ -199,7 +224,8 @@ def lasfile_to_geotiff(
     if xres is None or yres is None:
         xres = yres = infer_raster_resolution(lasdata)
 
-    rasters = lasdata_to_rasters(lasdata, bbox, layer_defs, xres, yres, fill_radius)
+    rasters = lasdata_to_rasters(lasdata, bbox, layer_defs, xres, yres,
+                                 fill_radius)
 
     if crs is None:
         crs = lasdata.header.parse_crs()

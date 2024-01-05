@@ -6,22 +6,30 @@ def main():
     """Main function."""
 
     parser = argparse.ArgumentParser(
-        description="Convert LAS file to GeoTIFF raster. The output GeoTIFF will have one band for each layer definition. A layer definition"
-        " consists of a return number and a theme. The theme can be 'elev' in which case the band will be a float32 elevation in the units of the"
-        " CRS, or 'intensity'. If the return number is positive it indicates the absolute return number. If the return number is negative it"
-        " indicates the position relative to the last return; e.g. -1 is the last return.",
+        description="Convert LAS file to GeoTIFF raster. The output GeoTIFF "
+        "will have one band for each layer definition. A layer definition "
+        "consists of a return number and a theme. The theme can be 'elev' in "
+        "which case the band will be a float32 elevation in the units of the "
+        "CRS, or 'intensity'. If the return number is positive it indicates "
+        "the absolute return number. If the return number is negative it "
+        "indicates the position relative to the last return; e.g. -1 is the "
+        "last return.",
         epilog="Examples: \n"
-        "\tlasrasterize --crs epsg:2285 -n 1 -t elev -n -1 -t elev -n -1 -t intensity /poth/to/lasfile.las /path/to/raster.tif\n"
-        "\t:: Create a GeoTIFF with three layers: the first return elevation, the last return elevation, and the last return intensity.",
+        "\tlasrasterize --crs epsg:2285 -n 1 -t elev -n -1 -t elev -n -1 -t "
+        "intensity /poth/to/lasfile.las /path/to/raster.tif\n"
+        "\t:: Create a GeoTIFF with three layers: the first return elevation, "
+        "the last return elevation, and the last return intensity.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("file_in", help="Input LAS filename.")
     parser.add_argument("file_out", help="Output GeoTIFF filename.")
     parser.add_argument(
         "--crs",
-        help="Coordinate reference system of the LAS file and output GeoTIFF. Accepts a string in any format"
-        " accepted by the rasterio file constructor. E.g. 'epsg:2926'. If omitted the CRS will be read from the LAS file, but the LAS file"
-        " may not have a CRS, or may have the wrong CRS.",
+        help="Coordinate reference system of the LAS file and output GeoTIFF. "
+        "Accepts a string in any format accepted by the rasterio file "
+        "constructor. E.g. 'epsg:2926'. If omitted the CRS will be read from "
+        "the LAS file, but the LAS file may not have a CRS, or may have the "
+        "wrong CRS.",
     )
     parser.add_argument(
         "-n",
@@ -62,7 +70,8 @@ def main():
         "-r",
         type=int,
         default=2,
-        help="Fill raster holes with average values within FILL_RADIUS pixels.",
+        help="Fill raster holes with average values within FILL_RADIUS "
+        "pixels.",
     )
 
     args = parser.parse_args()
