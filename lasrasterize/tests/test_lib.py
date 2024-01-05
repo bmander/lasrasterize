@@ -6,6 +6,7 @@ from lasrasterize.lib import (
     infer_raster_resolution,
     Layerdef,
     lasdata_to_rasters,
+    lasfile_to_geotiff,
 )
 import os
 import rasterio as rio
@@ -89,6 +90,36 @@ class TestLasdataToRasters(unittest.TestCase):
             self.assertEqual(rasters.dtype, np.float64)
 
             self.assertAlmostEqual(rasters[0, 4, 0], 0.07)
+
+
+class TestLasfileToGeotiff(unittest.TestCase):
+    def setUp(self):
+        # construct filename from the position of this test file
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        test_data_dir = os.path.join(test_dir, "data")
+        self.test_las_filename = os.path.join(test_data_dir, "sine.las")
+        self.test_tif_filename = os.path.join(test_data_dir, "sine.tif")
+
+    def tearDown(self):
+        os.remove(self.test_tif_filename)
+
+    def test_lasfile_to_geotiff(self):
+        lasfile_to_geotiff(
+            self.test_las_filename,
+            self.test_tif_filename,
+            [Layerdef(pulse_return=1, intensity=False)],
+            1,
+            1,
+        )
+
+        with rio.open(self.test_tif_filename) as f:
+            self.assertEqual(f.count, 1)
+            self.assertEqual(f.height, 10)
+            self.assertEqual(f.width, 10)
+
+            A = f.read(1)
+            self.assertAlmostEqual(A[0, 0], -0.13)
+            self.assertAlmostEqual(A[9, 9], -0.51, places=2)
 
 
 if __name__ == "__main__":
