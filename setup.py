@@ -9,7 +9,12 @@ setup(
             "lasrasterize = lasrasterize.cli:main",
         ],
     },
-    install_requires=["laspy==2.5", "rasterio==1.3.9", "numpy==1.24", "scipy==1.10"],
+    install_requires=[
+        "laspy==2.5",
+        "rasterio>=1.2.10,<=1.3.9",
+        "numpy==1.24",
+        "scipy==1.10",
+    ],
     author="Brandon Martin-Anderso",
     author_email="badhill@gmail.com",
     description="A command line tool and associated library used to convert lidar LAS files into GeoTIFF raster files.",
