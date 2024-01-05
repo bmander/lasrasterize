@@ -1,5 +1,5 @@
 import argparse
-from .lib import las_to_raster
+from .lib import lasfile_to_geotiff, Layerdef
 
 
 def main():
@@ -35,6 +35,7 @@ def main():
     parser.add_argument(
         "--xres",
         type=float,
+        default=None,
         help="Width of one pixel in output GeoTIFF, in the horizontal"
         " units of the CRS. If omitted, the LAS file will be used to"
         " make a reasonable guess.",
@@ -42,6 +43,7 @@ def main():
     parser.add_argument(
         "--yres",
         type=float,
+        default=None,
         help="Height of one pizel in output GeoTIFF, in the horizontal"
         " units of the CRS. If omitted, the LAS file will be used to"
         " make a reasonable guess.",
@@ -56,15 +58,32 @@ def main():
 
     args = parser.parse_args()
 
-    las_to_raster(
+    # make a list of layer definitions
+    if len(args.return_num) != len(args.theme):
+        raise ValueError(
+            "The number of return numbers must match the number of themes."
+        )
+
+    layer_defs = []
+    for return_num, theme in zip(args.return_num, args.theme):
+        if theme not in ("elev", "intensity"):
+            raise ValueError("Theme must be 'elev' or 'intensity'.")
+
+        layer_defs.append(
+            Layerdef(
+                pulse_return=return_num,
+                intensity=theme == "intensity",
+            )
+        )
+
+    lasfile_to_geotiff(
         args.file_in,
         args.file_out,
-        args.crs,
-        args.return_num,
-        args.theme,
+        layer_defs,
         args.xres,
         args.yres,
         args.fill_radius,
+        args.crs,
     )
 
 
