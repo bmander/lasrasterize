@@ -159,13 +159,15 @@ def lasdata_to_rasters(
         # set up nan-filled raster of the appropriate size
         raster = np.full((n_rows, n_cols), np.nan)
 
+        if layer_def.intensity:
+            values = lasdata.intensity[mask]
+        else:
+            values = lasdata.z[mask]
+
         # fill in grid positions with elevation information
         # a large number of grid positions will not correspond
         # to any lidar points and, as a result, will have NaN values
-        if layer_def.intensity:
-            raster[i_layer, j_layer] = lasdata.intensity[mask]
-        else:
-            raster[i_layer, j_layer] = lasdata.z[mask]
+        raster[i_layer, j_layer] = values
 
         if fill_holes:
             raster = fillholes(raster, fill_radius)
