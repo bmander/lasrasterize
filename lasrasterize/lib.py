@@ -164,10 +164,21 @@ def lasdata_to_rasters(
         else:
             values = lasdata.z[mask]
 
-        # fill in grid positions with elevation information
-        # a large number of grid positions will not correspond
-        # to any lidar points and, as a result, will have NaN values
-        raster[i_layer, j_layer] = values
+        # find the average value of each grid position
+        # this is necessary because multiple lidar points may correspond
+        # to the same grid position
+        sumraster = np.zeros((n_rows, n_cols), dtype=np.float64)
+        countraster = np.zeros((n_rows, n_cols), dtype=np.int64)
+        for i, j, value in zip(i_layer, j_layer, values):
+            sumraster[i, j] += value
+            countraster[i, j] += 1
+
+        # ignore divide by zero errors
+        with np.errstate(divide="ignore", invalid="ignore"):
+            raster = sumraster / countraster
+
+        # set regions with no data to NaN
+        raster[countraster == 0] = np.nan
 
         if fill_holes:
             raster = fillholes(raster, fill_radius)

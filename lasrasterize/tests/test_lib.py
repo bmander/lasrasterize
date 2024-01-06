@@ -118,7 +118,7 @@ class TestLasfileToGeotiff(unittest.TestCase):
 
             A = f.read(1)
             self.assertAlmostEqual(A[0, 0], -0.13)
-            self.assertAlmostEqual(A[9, 9], -0.51, places=2)
+            self.assertAlmostEqual(A[9, 9], -0.125, places=2)
 
 
 if __name__ == "__main__":
