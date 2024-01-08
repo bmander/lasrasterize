@@ -5,7 +5,7 @@ import laspy
 import numpy as np
 import rasterio as rio
 
-from lasrasterize.lib import (BBox, Layerdef, fillholes,
+from lasrasterize.lib import (BBox, Layerdef, fill_with_nearby_average,
                               infer_raster_resolution, lasdata_to_rasters,
                               lasfile_to_geotiff)
 
@@ -13,30 +13,30 @@ from lasrasterize.lib import (BBox, Layerdef, fillholes,
 class TestFillHoles(unittest.TestCase):
     def test_fillholes_no_nan(self):
         mat = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        result = fillholes(mat)
+        result = fill_with_nearby_average(mat)
         np.testing.assert_array_equal(result, mat)
 
     def test_fillholes_with_nan(self):
         mat = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
         expected = np.array([[1, 2.833333, 3], [4, 5, 6.166667], [7, 8, 9]])
-        result = fillholes(mat)
+        result = fill_with_nearby_average(mat)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_fillholes_all_nan(self):
         mat = np.full((3, 3), np.nan)
-        result = fillholes(mat)
+        result = fill_with_nearby_average(mat)
         self.assertTrue(np.isnan(result).all())
 
     def test_fillholes_with_radius(self):
         mat = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
         expected = np.array([[1, 2.833333, 3], [4, 5, 6.166667], [7, 8, 9]])
-        result = fillholes(mat, radius=1)
+        result = fill_with_nearby_average(mat, radius=1)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_fillholes_zero_radius(self):
         mat = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
         expected = np.array([[1, np.nan, 3], [4, 5, np.nan], [7, 8, 9]])
-        result = fillholes(mat, radius=0)
+        result = fill_with_nearby_average(mat, radius=0)
         np.testing.assert_array_equal(result, expected)
 
 

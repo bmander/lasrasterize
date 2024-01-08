@@ -65,7 +65,7 @@ def infer_raster_resolution(lasdata: laspy.LasData, p: float = 0.95) -> float:
     return resolution(p, density)
 
 
-def fillholes(mat, radius: int = 1) -> np.ndarray:
+def fill_with_nearby_average(mat, radius: int = 1) -> np.ndarray:
     """Fills holes in the input matrix.
 
     For each element in 'mat' that is nan, this function fills it with the
@@ -159,7 +159,7 @@ def points_to_raster(
     raster[countraster == 0] = np.nan
 
     if fill_holes:
-        raster = fillholes(raster, fill_radius)
+        raster = fill_with_nearby_average(raster, fill_radius)
 
     return raster
 
