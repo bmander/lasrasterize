@@ -106,6 +106,64 @@ def fillholes(mat, radius: int = 1) -> np.ndarray:
     return ret
 
 
+def points_to_raster(
+    points: np.ndarray,
+    bbox: BBox,
+    xres: Union[int, float],
+    yres: Union[int, float],
+    fill_holes: bool = True,
+    fill_radius: int = 2,
+) -> np.ndarray:
+    """Converts a point cloud to a raster.
+
+    Args:
+        points (np.ndarray): An array 3D points with shape (n, 3), where reach
+          point has format (x, y, value). The value can be elevation,
+          intensity or any other value.
+        bbox (BBox): The bounding box to use for the conversion, in map units.
+        xres (int | float): The resolution in the x direction, in map units.
+        yres (int | float): The resolution in the y direction, in map units.
+        fill_holes (bool, optional): Whether to fill holes in the raster.
+          Defaults to True.
+        fill_radius (int, optional): The radius to use when filling holes, in
+          pixels.
+
+    Returns:
+        np.ndarray: An float array containing the elevation or intensity
+          raster, with shape (m, n). Null values are filled with np.nan.
+    """
+
+    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
+    n_cols = int((bbox.right - bbox.left) / xres) + 1
+
+    i = ((bbox.top - points[:, 1]) / yres).astype(int)
+    j = ((points[:, 0] - bbox.left) / xres).astype(int)
+
+    # set up nan-filled raster of the appropriate size
+    raster = np.full((n_rows, n_cols), np.nan)
+
+    # find the average value of each grid position
+    # this is necessary because multiple lidar points may correspond
+    # to the same grid position
+    sumraster = np.zeros((n_rows, n_cols), dtype=np.float64)
+    countraster = np.zeros((n_rows, n_cols), dtype=np.int64)
+    for i, j, val in zip(i, j, points[:, 2]):
+        sumraster[i, j] += val
+        countraster[i, j] += 1
+
+    # ignore divide by zero errors
+    with np.errstate(divide="ignore", invalid="ignore"):
+        raster = sumraster / countraster
+
+    # set regions with no data to NaN
+    raster[countraster == 0] = np.nan
+
+    if fill_holes:
+        raster = fillholes(raster, fill_radius)
+
+    return raster
+
+
 def lasdata_to_rasters(
     lasdata: laspy.LasData,
     bbox: BBox,
@@ -138,9 +196,6 @@ def lasdata_to_rasters(
     n_rows = int((bbox.top - bbox.bottom) / yres) + 1
     n_cols = int((bbox.right - bbox.left) / xres) + 1
 
-    i = ((bbox.top - np.array(lasdata.y)) / yres).astype(int)
-    j = ((np.array(lasdata.x) - bbox.left) / xres).astype(int)
-
     # set up nan-filled raster of the appropriate size
     rasters = np.full((len(layer_defs), n_rows, n_cols), np.nan)
 
@@ -150,37 +205,27 @@ def lasdata_to_rasters(
             abs_pulse_return = lasdata.num_returns + layer_def.pulse_return + 1
         else:
             abs_pulse_return = layer_def.pulse_return
+
         mask = (lasdata.return_num == abs_pulse_return).astype(bool)
 
-        # get grid position of each point
-        i_layer, j_layer = i[mask], j[mask]
-
-        # set up nan-filled raster of the appropriate size
-        raster = np.full((n_rows, n_cols), np.nan)
+        x = lasdata.x[mask]
+        y = lasdata.y[mask]
 
         if layer_def.intensity:
-            values = lasdata.intensity[mask]
+            value = lasdata.intensity[mask]
         else:
-            values = lasdata.z[mask]
+            value = lasdata.z[mask]
 
-        # find the average value of each grid position
-        # this is necessary because multiple lidar points may correspond
-        # to the same grid position
-        sumraster = np.zeros((n_rows, n_cols), dtype=np.float64)
-        countraster = np.zeros((n_rows, n_cols), dtype=np.int64)
-        for i, j, value in zip(i_layer, j_layer, values):
-            sumraster[i, j] += value
-            countraster[i, j] += 1
+        points = np.stack((x, y, value), axis=1)
 
-        # ignore divide by zero errors
-        with np.errstate(divide="ignore", invalid="ignore"):
-            raster = sumraster / countraster
-
-        # set regions with no data to NaN
-        raster[countraster == 0] = np.nan
-
-        if fill_holes:
-            raster = fillholes(raster, fill_radius)
+        raster = points_to_raster(
+            points,
+            bbox,
+            xres,
+            yres,
+            fill_holes=fill_holes,
+            fill_radius=fill_radius,
+        )
 
         rasters[k] = raster
 
