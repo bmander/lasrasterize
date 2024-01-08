@@ -141,8 +141,39 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
                               [5, 5, 5, 5, 5],
                               [5, 5, 5, 5, 5],
                               [5, 5, 5, 5, 5]])
-        
+
         np.testing.assert_array_equal(raster2, expected2)
+
+    def test_points_to_raster_interpolate_methods(self):
+        # gradient from left to right with hole in the middle
+        mat = np.array([[0, 0, 0], [1, 0, 1], [2, 0, 2], [3, 0, 3], [4, 0, 4],
+                        [0, 1, 0], [4, 1, 4],
+                        [0, 2, 0], [4, 2, 4],
+                        [0, 3, 0], [1, 3, 1], [2, 3, 2], [3, 3, 3], [4, 3, 4]])
+        bbox = BBox(0, 0, 4, 3)
+        resolution = 1
+
+        raster = points_to_raster_interpolate(mat, bbox, resolution,
+                                              resolution)
+
+        expected = np.array([[0, 1, 2, 3, 4],
+                             [0, 1, 2, 3, 4],
+                             [0, 1, 2, 3, 4],
+                             [0, 1, 2, 3, 4]])
+
+        np.testing.assert_array_equal(raster, expected)
+
+        raster_linear = points_to_raster_interpolate(mat, bbox, resolution,
+                                                     resolution,
+                                                     method="linear")
+
+        np.testing.assert_array_equal(raster_linear, expected)
+
+        raster_cubic = points_to_raster_interpolate(mat, bbox, resolution,
+                                                    resolution,
+                                                    method="cubic")
+
+        np.testing.assert_array_almost_equal(raster_cubic, expected)
 
 
 if __name__ == "__main__":

@@ -157,11 +157,10 @@ def points_to_raster_interpolate(
     n_rows = int((bbox.top - bbox.bottom) / yres) + 1
     n_cols = int((bbox.right - bbox.left) / xres) + 1
 
-    xi = np.linspace(bbox.left, bbox.right, n_cols)
-    yi = np.linspace(bbox.bottom, bbox.top, n_rows)
-    xx, yy = np.meshgrid(xi, yi)
-
-    # interpolate
+    # use griddata to interpolate
+    x = np.linspace(bbox.left, bbox.right, n_cols)
+    y = np.linspace(bbox.bottom, bbox.top, n_rows)
+    xx, yy = np.meshgrid(x, y)
     raster = griddata(xypoints, values, (xx, yy), method=method)
 
     return raster
