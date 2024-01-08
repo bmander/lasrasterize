@@ -123,7 +123,7 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
         # donut of 5 with a hole in the middle
         mat = np.array([[0, 0, 5], [0, 1, 5], [0, 2, 5],
                         [1, 0, 5], [1, 2, 5],
-                        [2, 0, 5], [2, 1, 5], [2, 2, 5]])
+                        [2, 0, 5], [2, 1, 5], [2, 2, 5]]).transpose()
         bbox = BBox(0, 0, 2, 2)
         resolution = 1
 
@@ -149,7 +149,8 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
         mat = np.array([[0, 0, 0], [1, 0, 1], [2, 0, 2], [3, 0, 3], [4, 0, 4],
                         [0, 1, 0], [4, 1, 4],
                         [0, 2, 0], [4, 2, 4],
-                        [0, 3, 0], [1, 3, 1], [2, 3, 2], [3, 3, 3], [4, 3, 4]])
+                        [0, 3, 0], [1, 3, 1], [2, 3, 2],
+                        [3, 3, 3], [4, 3, 4]]).transpose()
         bbox = BBox(0, 0, 4, 3)
         resolution = 1
 
