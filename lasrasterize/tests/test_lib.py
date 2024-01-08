@@ -7,7 +7,7 @@ import rasterio as rio
 
 from lasrasterize.lib import (BBox, Layerdef, fill_with_nearby_average,
                               infer_raster_resolution, lasdata_to_rasters,
-                              lasfile_to_geotiff)
+                              lasfile_to_geotiff, points_to_raster_interpolate)
 
 
 class TestFillHoles(unittest.TestCase):
@@ -116,6 +116,33 @@ class TestLasfileToGeotiff(unittest.TestCase):
             A = f.read(1)
             self.assertAlmostEqual(A[0, 0], -0.13)
             self.assertAlmostEqual(A[9, 9], -0.125, places=2)
+
+
+class TestPointsToRasterInterpolate(unittest.TestCase):
+    def test_points_to_raster_interpolate(self):
+        # donut of 5 with a hole in the middle
+        mat = np.array([[0, 0, 5], [0, 1, 5], [0, 2, 5],
+                        [1, 0, 5], [1, 2, 5],
+                        [2, 0, 5], [2, 1, 5], [2, 2, 5]])
+        bbox = BBox(0, 0, 2, 2)
+        resolution = 1
+
+        raster = points_to_raster_interpolate(mat, bbox, resolution,
+                                              resolution)
+
+        expected = np.array([[5, 5, 5], [5, 5, 5], [5, 5, 5]])
+
+        np.testing.assert_array_equal(raster, expected)
+
+        raster2 = points_to_raster_interpolate(mat, bbox, 0.5, 0.5)
+
+        expected2 = np.array([[5, 5, 5, 5, 5],
+                              [5, 5, 5, 5, 5],
+                              [5, 5, 5, 5, 5],
+                              [5, 5, 5, 5, 5],
+                              [5, 5, 5, 5, 5]])
+        
+        np.testing.assert_array_equal(raster2, expected2)
 
 
 if __name__ == "__main__":

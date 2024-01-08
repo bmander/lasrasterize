@@ -5,6 +5,7 @@ import laspy
 import numpy as np
 import rasterio as rio
 from scipy import ndimage as nd
+from scipy.interpolate import griddata
 
 BBox = namedtuple("BBox", ["left", "bottom", "right", "top"])
 
@@ -111,10 +112,74 @@ def points_to_raster(
     bbox: BBox,
     xres: Union[int, float],
     yres: Union[int, float],
+    strategy: str = "gridandfill",
+    **kwargs
+) -> np.ndarray:
+    if strategy == "gridandfill":
+        return points_to_raster_grid_and_fill(points, bbox, xres, yres,
+                                              **kwargs)
+    elif strategy == "interpolate":
+        return points_to_raster_interpolate(points, bbox, xres, yres, **kwargs)
+    else:
+        raise ValueError("Invalid strategy")
+
+
+def points_to_raster_interpolate(
+    points: np.ndarray,
+    bbox: BBox,
+    xres: Union[int, float],
+    yres: Union[int, float],
+    method: str = "linear"
+) -> np.ndarray:
+    """Converts a point cloud to a raster using interpolation.
+
+    This function converts a point cloud to a raster by interpolation, using
+    the scipy.interpolate.griddata function. The method argument can take any
+    value accepted by griddata, but the default is linear interpolation.
+
+    Args:
+        points (np.ndarray): An array 3D points with shape (n, 3), where reach
+          point has format (x, y, value). The value can be elevation,
+          intensity or any other value.
+        bbox (BBox): The bounding box to use for the conversion, in map units.
+        xres (int | float): The resolution in the x direction, in map units.
+        yres (int | float): The resolution in the y direction, in map units.
+        method (str, optional): The interpolation method to use. Defaults to
+          "linear".
+
+    Returns:
+        np.ndarray: An float array of shape (m, n). Null values are filled
+          with np.nan."""
+
+    xypoints = points[:, 0:2]
+    values = points[:, 2]
+
+    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
+    n_cols = int((bbox.right - bbox.left) / xres) + 1
+
+    xi = np.linspace(bbox.left, bbox.right, n_cols)
+    yi = np.linspace(bbox.bottom, bbox.top, n_rows)
+    xx, yy = np.meshgrid(xi, yi)
+
+    # interpolate
+    raster = griddata(xypoints, values, (xx, yy), method=method)
+
+    return raster
+
+
+def points_to_raster_grid_and_fill(
+    points: np.ndarray,
+    bbox: BBox,
+    xres: Union[int, float],
+    yres: Union[int, float],
     fill_holes: bool = True,
     fill_radius: int = 2,
 ) -> np.ndarray:
-    """Converts a point cloud to a raster.
+    """Converts a point cloud to a raster using the grid-and-fill strategy.
+
+    This function converts a point cloud to a raster by first assigning each
+    point to a grid cell, then averaging the values of all points in each grid,
+    then filling holes in the raster with the average of nearby values.
 
     Args:
         points (np.ndarray): An array 3D points with shape (n, 3), where reach
@@ -218,7 +283,7 @@ def lasdata_to_rasters(
 
         points = np.stack((x, y, value), axis=1)
 
-        raster = points_to_raster(
+        raster = points_to_raster_grid_and_fill(
             points,
             bbox,
             xres,
