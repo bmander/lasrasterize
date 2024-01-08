@@ -1,16 +1,13 @@
-import unittest
-import numpy as np
-from lasrasterize.lib import (
-    fillholes,
-    BBox,
-    infer_raster_resolution,
-    Layerdef,
-    lasdata_to_rasters,
-    lasfile_to_geotiff,
-)
 import os
-import rasterio as rio
+import unittest
+
 import laspy
+import numpy as np
+import rasterio as rio
+
+from lasrasterize.lib import (BBox, Layerdef, fillholes,
+                              infer_raster_resolution, lasdata_to_rasters,
+                              lasfile_to_geotiff)
 
 
 class TestFillHoles(unittest.TestCase):

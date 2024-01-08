@@ -6,7 +6,6 @@ import numpy as np
 import rasterio as rio
 from scipy import ndimage as nd
 
-
 BBox = namedtuple("BBox", ["left", "bottom", "right", "top"])
 
 

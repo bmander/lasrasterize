@@ -1,5 +1,6 @@
 import argparse
-from .lib import lasfile_to_geotiff, Layerdef
+
+from .lib import Layerdef, lasfile_to_geotiff
 
 
 def main():
