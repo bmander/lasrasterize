@@ -177,5 +177,15 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
         np.testing.assert_array_almost_equal(raster_cubic, expected)
 
 
+class TestSinglePoint(unittest.TestCase):
+    def test_middle(self):
+        mat = np.array([[.5, .5, 5]]).transpose()
+        bbox = BBox(0, 0, 1, 1)
+        resolution = 1
+
+        self.assertRaises(ValueError, points_to_raster_interpolate, mat, bbox,
+                          resolution, resolution)
+
+
 if __name__ == "__main__":
     unittest.main()

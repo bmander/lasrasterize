@@ -151,6 +151,10 @@ def points_to_raster_interpolate(
         np.ndarray: An float array of shape (m, n). Null values are filled
           with np.nan."""
 
+    # check that points has at least two points
+    if points.shape[1] < 2:
+        raise ValueError("points must have at least two points")
+
     xypoints = points[0:2].T
     values = points[2]
 
@@ -282,11 +286,12 @@ def lasdata_to_rasters(
 
         points = np.stack((x, y, value))
 
-        raster = points_to_raster_grid_and_fill(
+        raster = points_to_raster(
             points,
             bbox,
             xres,
             yres,
+            strategy="gridandfill",
             fill_holes=fill_holes,
             fill_radius=fill_radius,
         )
