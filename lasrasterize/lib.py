@@ -1,6 +1,6 @@
 from collections import namedtuple
 from math import ceil
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import laspy
 import numpy as np
@@ -116,20 +116,25 @@ def points_to_raster(
     strategy: str = "gridandfill",
     **kwargs
 ) -> np.ndarray:
+
+    width = int(ceil((bbox.right - bbox.left) / xres))
+    height = int(ceil((bbox.top - bbox.bottom) / yres))
+
     if strategy == "gridandfill":
         return points_to_raster_grid_and_fill(points, bbox, xres, yres,
                                               **kwargs)
     elif strategy == "interpolate":
-        return points_to_raster_interpolate(points, bbox, xres, yres, **kwargs)
+        return points_to_raster_interpolate(points, (bbox.left, bbox.height),
+                                            width, height, **kwargs)
     else:
         raise ValueError("Invalid strategy")
 
 
 def points_to_raster_interpolate(
     points: np.ndarray,
-    bbox: BBox,
-    xres: Union[int, float],
-    yres: Union[int, float],
+    origin: Tuple[float, float],
+    width: int,
+    height: int,
     method: str = "linear"
 ) -> np.ndarray:
     """Converts a point cloud to a raster using interpolation.
@@ -142,12 +147,12 @@ def points_to_raster_interpolate(
         points (np.ndarray): An array 3D points with shape (3, n), where reach
           point has format (x, y, value). The value can be elevation,
           intensity or any other value.
-        bbox (BBox): The bounding box to use for the conversion, in map units.
-          The output raster may be larger than the bounding box to accomodate
-          the resolution, in the cases the bounding box is not a multiple of
-          the resolution.
-        xres (int | float): The resolution in the x direction, in map units.
-        yres (int | float): The resolution in the y direction, in map units.
+        origin (Tuple[float, float]): The upper-lefthand corner of the raster,
+          in map units.
+        width (int): The width of the raster, in pixels. i.e., the number of
+          columns.
+        height (int): The height of the raster, in pixels. i.e., the number of
+          rows.
         method (str, optional): The interpolation method to use. Defaults to
           "linear".
 
@@ -162,12 +167,13 @@ def points_to_raster_interpolate(
     xypoints = points[0:2].T
     values = points[2]
 
-    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
-    n_cols = int(ceil((bbox.right - bbox.left) / xres))
+    left, top = origin
+    right = left + width
+    bottom = top - height
 
     # use griddata to interpolate
-    x = np.linspace(bbox.left, bbox.right, n_cols)
-    y = np.linspace(bbox.bottom, bbox.top, n_rows)
+    x = np.linspace(left, right, width)
+    y = np.linspace(bottom, top, height)
     xx, yy = np.meshgrid(x, y)
     raster = griddata(xypoints, values, (xx, yy), method=method)
 
@@ -210,7 +216,7 @@ def points_to_raster_grid_and_fill(
 
     n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
     n_cols = int(ceil((bbox.right - bbox.left) / xres))
-    
+
     i = ((bbox.top - points[1]) / yres).astype(int)
     j = ((points[0] - bbox.left) / xres).astype(int)
 

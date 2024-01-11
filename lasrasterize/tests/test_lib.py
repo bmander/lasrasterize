@@ -125,19 +125,15 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
         mat = np.array([[0, 0, 5], [0, 1, 5], [0, 2, 5],
                         [1, 0, 5], [1, 2, 5],
                         [2, 0, 5], [2, 1, 5], [2, 2, 5]]).transpose()
-        bbox = BBox(0, 0, 3, 3)
-        resolution = 1
 
-        interp_nearest = points_to_raster_interpolate(mat, bbox, resolution,
-                                                      resolution,
+        interp_nearest = points_to_raster_interpolate(mat, (0, 3), 3, 3,
                                                       method="nearest")
 
         expected_interp_nearest = np.array([[5, 5, 5], [5, 5, 5], [5, 5, 5]])
 
         np.testing.assert_array_equal(interp_nearest, expected_interp_nearest)
 
-        interp_linear = points_to_raster_interpolate(mat, bbox, resolution,
-                                                     resolution,
+        interp_linear = points_to_raster_interpolate(mat, (0, 3), 3, 3,
                                                      method="linear")
 
         expected_interp_linear = np.array([[5, 5, np.nan], [5, 5, np.nan],
@@ -145,15 +141,14 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
 
         np.testing.assert_array_equal(interp_linear, expected_interp_linear)
 
-        interp_cubic = points_to_raster_interpolate(mat, bbox, resolution,
-                                                    resolution,
+        interp_cubic = points_to_raster_interpolate(mat, (0, 3), 3, 3,
                                                     method="cubic")
         expected_interp_cube = np.array([[5, 5, np.nan], [5, 5, np.nan],
                                          [np.nan, np.nan, np.nan]])
 
         np.testing.assert_array_equal(interp_cubic, expected_interp_cube)
 
-        raster2 = points_to_raster_interpolate(mat, bbox, 0.5, 0.5,
+        raster2 = points_to_raster_interpolate(mat, (0, 3), 6, 6,
                                                method="nearest")
 
         expected2 = np.array([[5, 5, 5, 5, 5, 5],
@@ -172,11 +167,9 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
                         [0, 2, 0], [4, 2, 4],
                         [0, 3, 0], [1, 3, 1], [2, 3, 2],
                         [3, 3, 3], [4, 3, 4]]).transpose()
-        bbox = BBox(0, 0, 4, 3)
-        resolution = 1
 
-        raster = points_to_raster_interpolate(mat, bbox, resolution,
-                                              resolution, method="nearest")
+        raster = points_to_raster_interpolate(mat, (0, 3), 4, 3,
+                                              method="nearest")
 
         expected = np.array([[0, 1, 3, 4],
                              [0, 0, 4, 4],
@@ -184,8 +177,8 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(raster, expected)
 
-        raster_linear = points_to_raster_interpolate(mat, bbox, resolution,
-                                                     resolution,
+        raster_linear = points_to_raster_interpolate(mat, (0, 3), 4,
+                                                     3,
                                                      method="linear")
 
         expected_linear = np.array([[0., 1.333333, 2.666667, 4.],
@@ -194,8 +187,8 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(raster_linear, expected_linear)
 
-        raster_cubic = points_to_raster_interpolate(mat, bbox, resolution,
-                                                    resolution,
+        raster_cubic = points_to_raster_interpolate(mat, (0, 3), 4,
+                                                    3,
                                                     method="cubic")
 
         expected_cubic = np.array([[0., 1.333333, 2.666667, 4.],
@@ -211,8 +204,9 @@ class TestSinglePoint(unittest.TestCase):
         bbox = BBox(0, 0, 1, 1)
         resolution = 1
 
-        self.assertRaises(ValueError, points_to_raster_interpolate, mat, bbox,
-                          resolution, resolution)
+        self.assertRaises(ValueError, points_to_raster_interpolate, mat,
+                          (0, 1),
+                          1, 1)
 
         mat = points_to_raster_grid_and_fill(mat, bbox, resolution, resolution)
 
