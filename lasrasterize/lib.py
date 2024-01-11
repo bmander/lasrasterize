@@ -1,4 +1,5 @@
 from collections import namedtuple
+from math import ceil
 from typing import Iterable, Optional, Union
 
 import laspy
@@ -142,6 +143,9 @@ def points_to_raster_interpolate(
           point has format (x, y, value). The value can be elevation,
           intensity or any other value.
         bbox (BBox): The bounding box to use for the conversion, in map units.
+          The output raster may be larger than the bounding box to accomodate
+          the resolution, in the cases the bounding box is not a multiple of
+          the resolution.
         xres (int | float): The resolution in the x direction, in map units.
         yres (int | float): The resolution in the y direction, in map units.
         method (str, optional): The interpolation method to use. Defaults to
@@ -158,8 +162,8 @@ def points_to_raster_interpolate(
     xypoints = points[0:2].T
     values = points[2]
 
-    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
-    n_cols = int((bbox.right - bbox.left) / xres) + 1
+    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
+    n_cols = int(ceil((bbox.right - bbox.left) / xres))
 
     # use griddata to interpolate
     x = np.linspace(bbox.left, bbox.right, n_cols)
@@ -189,6 +193,9 @@ def points_to_raster_grid_and_fill(
           point has format (x, y, value). The value can be elevation,
           intensity or any other value.
         bbox (BBox): The bounding box to use for the conversion, in map units.
+          The output raster may be larger than the bounding box to accomodate
+          the resolution, in the cases the bounding box is not a multiple of
+          the resolution.
         xres (int | float): The resolution in the x direction, in map units.
         yres (int | float): The resolution in the y direction, in map units.
         fill_holes (bool, optional): Whether to fill holes in the raster.
@@ -201,9 +208,9 @@ def points_to_raster_grid_and_fill(
           raster, with shape (m, n). Null values are filled with np.nan.
     """
 
-    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
-    n_cols = int((bbox.right - bbox.left) / xres) + 1
-
+    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
+    n_cols = int(ceil((bbox.right - bbox.left) / xres))
+    
     i = ((bbox.top - points[1]) / yres).astype(int)
     j = ((points[0] - bbox.left) / xres).astype(int)
 
@@ -246,6 +253,9 @@ def lasdata_to_rasters(
     Args:
         lasdata (laspy.LasData): LasData object to convert.
         bbox (BBox): The bounding box to use for the conversion, in map units.
+          The output raster may be larger than the bounding box to accomodate
+          the resolution, in the cases the bounding box is not a multiple of
+          the resolution.
         xres (int | float): The resolution in the x direction, in map units.
         yres (int | float): The resolution in the y direction, in map units.
         layer_defs (Iterable[Laslayer_definition]): An iterable of
@@ -261,8 +271,8 @@ def lasdata_to_rasters(
           np.nan.
     """
 
-    n_rows = int((bbox.top - bbox.bottom) / yres) + 1
-    n_cols = int((bbox.right - bbox.left) / xres) + 1
+    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
+    n_cols = int(ceil((bbox.right - bbox.left) / xres))
 
     # set up nan-filled raster of the appropriate size
     rasters = np.full((len(layer_defs), n_rows, n_cols), np.nan)
