@@ -121,10 +121,11 @@ def points_to_raster(
     height = int(ceil((bbox.top - bbox.bottom) / yres))
 
     if strategy == "gridandfill":
-        return points_to_raster_grid_and_fill(points, bbox, xres, yres,
+        return points_to_raster_grid_and_fill(points, (bbox.left, bbox.top),
+                                              width, height, xres, yres,
                                               **kwargs)
     elif strategy == "interpolate":
-        return points_to_raster_interpolate(points, (bbox.left, bbox.height),
+        return points_to_raster_interpolate(points, (bbox.left, bbox.top),
                                             width, height, **kwargs)
     else:
         raise ValueError("Invalid strategy")
@@ -186,9 +187,11 @@ def points_to_raster_interpolate(
 
 def points_to_raster_grid_and_fill(
     points: np.ndarray,
-    bbox: BBox,
-    xres: Union[int, float],
-    yres: Union[int, float],
+    origin: Tuple[float, float],
+    width: int,
+    height: int,
+    xres: float,
+    yres: float,
     fill_holes: bool = True,
     fill_radius: int = 2,
 ) -> np.ndarray:
@@ -202,10 +205,12 @@ def points_to_raster_grid_and_fill(
         points (np.ndarray): An array 3D points with shape (3, n), where reach
           point has format (x, y, value). The value can be elevation,
           intensity or any other value.
-        bbox (BBox): The bounding box to use for the conversion, in map units.
-          The output raster may be larger than the bounding box to accomodate
-          the resolution, in the cases the bounding box is not a multiple of
-          the resolution.
+        origin (Tuple[float, float]): The upper-lefthand corner of the raster,
+          in map units.
+        width (int): The width of the raster, in pixels. i.e., the number of
+          columns.
+        height (int): The height of the raster, in pixels. i.e., the number of
+          rows.
         xres (int | float): The resolution in the x direction, in map units.
         yres (int | float): The resolution in the y direction, in map units.
         fill_holes (bool, optional): Whether to fill holes in the raster.
@@ -218,20 +223,19 @@ def points_to_raster_grid_and_fill(
           raster, with shape (m, n). Null values are filled with np.nan.
     """
 
-    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
-    n_cols = int(ceil((bbox.right - bbox.left) / xres))
+    left, top = origin
 
-    i = ((bbox.top - points[1]) / yres).astype(int)
-    j = ((points[0] - bbox.left) / xres).astype(int)
+    i = ((top - points[1]) / yres).astype(int)
+    j = ((points[0] - left) / xres).astype(int)
 
     # set up nan-filled raster of the appropriate size
-    raster = np.full((n_rows, n_cols), np.nan)
+    raster = np.full((height, width), np.nan)
 
     # find the average value of each grid position
     # this is necessary because multiple lidar points may correspond
     # to the same grid position
-    sumraster = np.zeros((n_rows, n_cols), dtype=np.float64)
-    countraster = np.zeros((n_rows, n_cols), dtype=np.int64)
+    sumraster = np.zeros((height, width), dtype=np.float64)
+    countraster = np.zeros((height, width), dtype=np.int64)
     for i, j, val in zip(i, j, points[2]):
         sumraster[i, j] += val
         countraster[i, j] += 1

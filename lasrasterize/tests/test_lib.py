@@ -56,7 +56,6 @@ class TestInferRasterResolution(unittest.TestCase):
             # infer the raster resolution
             resolution = infer_raster_resolution(lasdata)
 
-            # assert that the resolution is about 1.73
             self.assertAlmostEqual(resolution, 1.7057, places=2)
 
 
@@ -211,14 +210,14 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
 class TestSinglePoint(unittest.TestCase):
     def test_middle(self):
         mat = np.array([[.5, .5, 5]]).transpose()
-        bbox = BBox(0, 0, 1, 1)
         resolution = 1
 
         self.assertRaises(ValueError, points_to_raster_interpolate, mat,
                           (0, 1),
                           1, 1, resolution, resolution)
 
-        mat = points_to_raster_grid_and_fill(mat, bbox, resolution, resolution)
+        mat = points_to_raster_grid_and_fill(mat, (0, 1), 1, 1, resolution,
+                                             resolution)
 
         expected = np.array([[5]])
 
