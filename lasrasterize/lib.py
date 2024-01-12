@@ -110,22 +110,21 @@ def fill_with_nearby_average(mat, radius: int = 1) -> np.ndarray:
 
 def points_to_raster(
     points: np.ndarray,
-    bbox: BBox,
-    xres: Union[int, float],
-    yres: Union[int, float],
+    origin: Tuple[float, float],
+    width: int,
+    height: int,
+    xres: float,
+    yres: float,
     strategy: str = "gridandfill",
     **kwargs
 ) -> np.ndarray:
 
-    width = int(ceil((bbox.right - bbox.left) / xres))
-    height = int(ceil((bbox.top - bbox.bottom) / yres))
-
     if strategy == "gridandfill":
-        return points_to_raster_grid_and_fill(points, (bbox.left, bbox.top),
+        return points_to_raster_grid_and_fill(points, origin,
                                               width, height, xres, yres,
                                               **kwargs)
     elif strategy == "interpolate":
-        return points_to_raster_interpolate(points, (bbox.left, bbox.top),
+        return points_to_raster_interpolate(points, origin,
                                             width, height, **kwargs)
     else:
         raise ValueError("Invalid strategy")
@@ -310,9 +309,14 @@ def lasdata_to_rasters(
 
         points = np.stack((x, y, value))
 
+        width = int(ceil((bbox.right - bbox.left) / xres))
+        height = int(ceil((bbox.top - bbox.bottom) / yres))
+
         raster = points_to_raster(
             points,
-            bbox,
+            (bbox.left, bbox.top),
+            width,
+            height,
             xres,
             yres,
             strategy="gridandfill",
