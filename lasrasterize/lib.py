@@ -135,6 +135,8 @@ def points_to_raster_interpolate(
     origin: Tuple[float, float],
     width: int,
     height: int,
+    xres: float,
+    yres: float,
     method: str = "linear"
 ) -> np.ndarray:
     """Converts a point cloud to a raster using interpolation.
@@ -153,6 +155,8 @@ def points_to_raster_interpolate(
           columns.
         height (int): The height of the raster, in pixels. i.e., the number of
           rows.
+        xres (float): The resolution in the x direction, in map units.
+        yres (float): The resolution in the y direction, in map units.
         method (str, optional): The interpolation method to use. Defaults to
           "linear".
 
@@ -168,8 +172,8 @@ def points_to_raster_interpolate(
     values = points[2]
 
     left, top = origin
-    right = left + width
-    bottom = top - height
+    right = left + width*xres
+    bottom = top - height*yres
 
     # use griddata to interpolate
     x = np.linspace(left, right, width)
