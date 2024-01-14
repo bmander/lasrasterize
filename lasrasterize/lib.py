@@ -375,14 +375,8 @@ def lasfile_to_geotiff(
     if crs is None:
         crs = lasdata.header.parse_crs()
 
-    # find bounding box of the data
-    left = lasdata.header.x_min
-    top = lasdata.header.y_max
-    right = left + width * xres
-    bottom = top - height * yres
-    transform = rio.transform.from_bounds(
-        left, bottom, right, top, width, height
-    )
+    transform = rio.transform.from_origin(lasdata.header.x_min,
+                                          lasdata.header.y_max, xres, yres)
     n_layers = len(layer_defs)
 
     with rio.open(
