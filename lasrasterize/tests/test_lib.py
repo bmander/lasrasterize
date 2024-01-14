@@ -5,7 +5,7 @@ import laspy
 import numpy as np
 import rasterio as rio
 
-from lasrasterize.lib import (BBox, Layerdef, fill_with_nearby_average,
+from lasrasterize.lib import (Layerdef, fill_with_nearby_average,
                               infer_raster_resolution, lasdata_to_rasters,
                               lasfile_to_geotiff, points_to_raster_interpolate,
                               points_to_raster_grid_and_fill)
@@ -76,7 +76,7 @@ class TestLasdataToRasters(unittest.TestCase):
 
             # convert the lasdata to rasters
             rasters = lasdata_to_rasters(
-                lasdata, BBox(0, 0, 0.1, 0.1), [layer_def], 0.01, 0.01
+                lasdata, (0, 0.1), 10, 10, 0.01, 0.01, [layer_def],
             )
 
             # assert that the rasters are the correct shape

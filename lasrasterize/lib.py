@@ -254,10 +254,12 @@ def points_to_raster_grid_and_fill(
 
 def lasdata_to_rasters(
     lasdata: laspy.LasData,
-    bbox: BBox,
-    layer_defs: Iterable[Layerdef],
+    origin: Tuple[float, float],
+    width: int,
+    height: int,
     xres: Union[int, float],
     yres: Union[int, float],
+    layer_defs: Iterable[Layerdef],
     fill_holes: bool = True,
     fill_radius: int = 2,
 ) -> np.ndarray:
@@ -265,7 +267,7 @@ def lasdata_to_rasters(
 
     Args:
         lasdata (laspy.LasData): LasData object to convert.
-        bbox (BBox): The bounding box to use for the conversion, in map units.
+        bbox (BBox): The bounding box of the output map, in map units.
           The output raster may be larger than the bounding box to accomodate
           the resolution, in the cases the bounding box is not a multiple of
           the resolution.
@@ -284,11 +286,8 @@ def lasdata_to_rasters(
           np.nan.
     """
 
-    n_rows = int(ceil((bbox.top - bbox.bottom) / yres))
-    n_cols = int(ceil((bbox.right - bbox.left) / xres))
-
     # set up nan-filled raster of the appropriate size
-    rasters = np.full((len(layer_defs), n_rows, n_cols), np.nan)
+    rasters = np.full((len(layer_defs), height, width), np.nan)
 
     for k, layer_def in enumerate(layer_defs):
         # get a mask to filter out points that don't belong in this layer
@@ -309,12 +308,9 @@ def lasdata_to_rasters(
 
         points = np.stack((x, y, value))
 
-        width = int(ceil((bbox.right - bbox.left) / xres))
-        height = int(ceil((bbox.top - bbox.bottom) / yres))
-
         raster = points_to_raster(
             points,
-            (bbox.left, bbox.top),
+            origin,
             width,
             height,
             xres,
@@ -367,27 +363,27 @@ def lasfile_to_geotiff(
 
     lasdata: laspy.LasData = laspy.read(las_filename)
 
-    # find bounding box of the data
-    bbox = BBox(
-        lasdata.header.x_min,
-        lasdata.header.y_min,
-        lasdata.header.x_max,
-        lasdata.header.y_max,
-    )
-
     if xres is None or yres is None:
         xres = yres = infer_raster_resolution(lasdata)
 
-    rasters = lasdata_to_rasters(lasdata, bbox, layer_defs, xres, yres,
-                                 fill_radius)
+    width = int(ceil((lasdata.header.x_max - lasdata.header.x_min) / xres))
+    height = int(ceil((lasdata.header.y_max - lasdata.header.y_min) / yres))
+    origin = (lasdata.header.x_min, lasdata.header.y_max)
+    rasters = lasdata_to_rasters(lasdata, origin, width, height, xres, yres,
+                                 layer_defs, fill_radius)
 
     if crs is None:
         crs = lasdata.header.parse_crs()
 
-    n_layers, height, width = rasters.shape
+    # find bounding box of the data
+    left = lasdata.header.x_min
+    top = lasdata.header.y_max
+    right = left + width * xres
+    bottom = top - height * yres
     transform = rio.transform.from_bounds(
-        bbox.left, bbox.bottom, bbox.right, bbox.top, width, height
+        left, bottom, right, top, width, height
     )
+    n_layers = len(layer_defs)
 
     with rio.open(
         geotiff_filename,
