@@ -342,6 +342,8 @@ def lasfile_to_geotiff(
     xres: Optional[Union[int, float]] = None,
     yres: Optional[Union[int, float]] = None,
     crs: str = None,
+    strategy: str = "gridandfill",
+    **kwargs
 ) -> None:
     """Converts a LAS file to a GeoTiff.
 
@@ -377,7 +379,7 @@ def lasfile_to_geotiff(
     height = int(ceil((lasdata.header.y_max - lasdata.header.y_min) / yres))
     origin = (lasdata.header.x_min, lasdata.header.y_max)
     rasters = lasdata_to_rasters(lasdata, origin, width, height, xres, yres,
-                                 layer_defs)
+                                 layer_defs, strategy, **kwargs)
 
     if crs is None:
         crs = lasdata.header.parse_crs()

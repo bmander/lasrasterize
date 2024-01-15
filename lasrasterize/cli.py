@@ -67,6 +67,17 @@ def main():
         " make a reasonable guess.",
     )
     parser.add_argument(
+        "--strategy",
+        type=str,
+        default="gridandfill",
+        choices=["gridandfill", "nearest", "linear", "cubic"],
+        help="Interpolation strategy. 'gridandfill' is the default and will "
+        "value a pixel as the average of all points falling withn that pixel, "
+        "and then fill holes with the average of neighboring pixels. "
+        "'nearest', 'linear', and 'cubic' will interpolate a grid using "
+        "scipy.interpolate.griddata with the specified method.",
+    )
+    parser.add_argument(
         "--fill_radius",
         "-r",
         type=int,
@@ -102,6 +113,8 @@ def main():
         args.xres,
         args.yres,
         args.crs,
+        args.strategy,
+        fill_radius=args.fill_radius,
     )
 
 
