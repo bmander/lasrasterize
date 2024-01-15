@@ -127,7 +127,8 @@ def points_to_raster(
                                               fill_holes, fill_radius)
     elif strategy in ("nearest", "linear", "cubic"):
         return points_to_raster_interpolate(points, origin,
-                                            width, height, method=strategy)
+                                            width, height, xres, yres,
+                                            method=strategy)
     else:
         raise ValueError("Invalid strategy: '{}'".format(strategy))
 
