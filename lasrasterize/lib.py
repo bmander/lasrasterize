@@ -127,7 +127,7 @@ def points_to_raster(
         return points_to_raster_interpolate(points, origin,
                                             width, height, **kwargs)
     else:
-        raise ValueError("Invalid strategy")
+        raise ValueError("Invalid strategy: '{}'".format(strategy))
 
 
 def points_to_raster_interpolate(
@@ -315,7 +315,7 @@ def lasdata_to_rasters(
             height,
             xres,
             yres,
-            strategy="gridandfill",
+            strategy,
             **kwargs
         )
 
@@ -330,7 +330,6 @@ def lasfile_to_geotiff(
     layer_defs: Iterable[Layerdef],
     xres: Optional[Union[int, float]] = None,
     yres: Optional[Union[int, float]] = None,
-    fill_radius: int = 2,
     crs: str = None,
 ) -> None:
     """Converts a LAS file to a GeoTiff.
@@ -369,7 +368,7 @@ def lasfile_to_geotiff(
     height = int(ceil((lasdata.header.y_max - lasdata.header.y_min) / yres))
     origin = (lasdata.header.x_min, lasdata.header.y_max)
     rasters = lasdata_to_rasters(lasdata, origin, width, height, xres, yres,
-                                 layer_defs, fill_radius)
+                                 layer_defs)
 
     if crs is None:
         crs = lasdata.header.parse_crs()
