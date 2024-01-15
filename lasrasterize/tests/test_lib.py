@@ -119,7 +119,7 @@ class TestLasfileToGeotiff(unittest.TestCase):
 
 
 class TestPointsToRasterInterpolate(unittest.TestCase):
-    def test_points_to_raster_interpolate(self):
+    def test_points_to_raster_interpolate_uniform(self):
         # donut of 5 with a hole in the middle
         mat = np.array([[0, 0, 5], [0, 1, 5], [0, 2, 5],
                         [1, 0, 5], [1, 2, 5],
@@ -139,16 +139,18 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
                                                      res,
                                                      method="linear")
 
-        expected_interp_linear = np.array([[5, 5, np.nan], [5, 5, np.nan],
-                                           [np.nan, np.nan, np.nan]])
+        expected_interp_linear = np.array([[np.nan, np.nan, np.nan],
+                                           [5, 5, np.nan],
+                                           [5, 5, np.nan]])
 
         np.testing.assert_array_equal(interp_linear, expected_interp_linear)
 
         interp_cubic = points_to_raster_interpolate(mat, (0, 3), 3, 3, res,
                                                     res,
                                                     method="cubic")
-        expected_interp_cube = np.array([[5, 5, np.nan], [5, 5, np.nan],
-                                         [np.nan, np.nan, np.nan]])
+        expected_interp_cube = np.array([[np.nan, np.nan, np.nan],
+                                         [5, 5, np.nan],
+                                         [5, 5, np.nan]])
 
         np.testing.assert_array_equal(interp_cubic, expected_interp_cube)
 
@@ -205,6 +207,58 @@ class TestPointsToRasterInterpolate(unittest.TestCase):
                                    [0., 1.333333, 2.666667, 4.]])
 
         np.testing.assert_array_almost_equal(raster_cubic, expected_cubic)
+
+
+class TestOrientation(unittest.TestCase):
+    def test_interpolate(self):
+        # square of four points, larger z value on the top than the bottom
+        mat = np.array([[0, 0, 0], [2, 0, 0],
+                        [0, 2, 1], [2, 2, 1]]).transpose()
+        res = 1
+        raster = points_to_raster_interpolate(mat, (0, 2), 2, 2, res, res,
+                                              method="nearest")
+
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [0, 0]]))
+
+        raster = points_to_raster_interpolate(mat, (0, 2), 2, 2, res, res,
+                                              method="linear")
+
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [0, 0]]))
+
+        raster = points_to_raster_interpolate(mat, (0, 2), 2, 2, res, res,
+                                              method="cubic")
+
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [0, 0]]))
+
+    def test_grid_and_fill(self):
+        # square of four points, larger z value on the top than the bottom
+        mat = np.array([[0.01, 0.01, 0], [1.99, 0.01, 0],
+                        [0.01, 1.99, 1], [1.99, 1.99, 1]]).transpose()
+        res = 1
+        raster = points_to_raster_grid_and_fill(mat, (0, 2), 2, 2, res, res)
+
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [0, 0]]))
+
+
+class TestEmpty(unittest.TestCase):
+    def test_empty(self):
+        mat = np.array([[]])
+        resolution = 1
+
+        self.assertRaises(ValueError, points_to_raster_interpolate, mat,
+                          (0, 1),
+                          1, 1, resolution, resolution)
+
+        mat = points_to_raster_grid_and_fill(mat, (0, 1), 1, 1, resolution,
+                                             resolution)
+
+        expected = np.array([[np.nan]])
+
+        np.testing.assert_array_equal(mat, expected)
 
 
 class TestSinglePoint(unittest.TestCase):

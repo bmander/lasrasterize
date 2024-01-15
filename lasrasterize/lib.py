@@ -177,7 +177,7 @@ def points_to_raster_interpolate(
 
     # use griddata to interpolate
     x = np.linspace(left, right, width)
-    y = np.linspace(bottom, top, height)
+    y = np.linspace(top, bottom, height)
     xx, yy = np.meshgrid(x, y)
     raster = griddata(xypoints, values, (xx, yy), method=method)
 
@@ -224,11 +224,15 @@ def points_to_raster_grid_and_fill(
 
     left, top = origin
 
-    i = ((top - points[1]) / yres).astype(int)
-    j = ((points[0] - left) / xres).astype(int)
-
     # set up nan-filled raster of the appropriate size
     raster = np.full((height, width), np.nan)
+
+    # check that points has at least one point
+    if points.shape[1] == 0:
+        return raster
+
+    i = ((top - points[1]) / yres).astype(int)
+    j = ((points[0] - left) / xres).astype(int)
 
     # find the average value of each grid position
     # this is necessary because multiple lidar points may correspond
