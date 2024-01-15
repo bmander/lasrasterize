@@ -244,6 +244,40 @@ class TestOrientation(unittest.TestCase):
                                              np.array([[1, 1], [0, 0]]))
 
 
+class TestOutOfBounds(unittest.TestCase):
+    def test_interpolate(self):
+        # square of four points; corners of the box (0, 0, 4, 4)
+        mat = np.array([[0, 0, 1], [4, 0, 1],
+                        [0, 4, 1], [4, 4, 1]]).transpose()
+        res = 1
+
+        raster = points_to_raster_interpolate(mat, (1, 3), 2, 2, res, res,
+                                              method="nearest")
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [1, 1]]))
+
+        raster = points_to_raster_interpolate(mat, (1, 3), 2, 2, res, res,
+                                              method="linear")
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [1, 1]]))
+
+        raster = points_to_raster_interpolate(mat, (1, 3), 2, 2, res, res,
+                                              method="cubic")
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[1, 1], [1, 1]]))
+
+    def test_grid_and_fill(self):
+        # square of four points; corners of the box (0, 0, 4, 4)
+        mat = np.array([[0, 0, 1], [4, 0, 1],
+                        [0, 4, 1], [4, 4, 1]]).transpose()
+        res = 1
+
+        raster = points_to_raster_grid_and_fill(mat, (1, 3), 2, 2, res, res)
+        np.testing.assert_array_almost_equal(raster,
+                                             np.array([[np.nan, np.nan],
+                                                       [np.nan, np.nan]]))
+
+
 class TestEmpty(unittest.TestCase):
     def test_empty(self):
         mat = np.array([[]])

@@ -234,6 +234,11 @@ def points_to_raster_grid_and_fill(
     i = ((top - points[1]) / yres).astype(int)
     j = ((points[0] - left) / xres).astype(int)
 
+    # filter points outside of the raster
+    mask = (i >= 0) & (i < height) & (j >= 0) & (j < width)
+    i = i[mask]
+    j = j[mask]
+
     # find the average value of each grid position
     # this is necessary because multiple lidar points may correspond
     # to the same grid position
