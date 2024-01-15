@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "lasrasterize"
-version = "0.1"
+version = "0.2.1"
 description = "A command line tool and associated library used to convert lidar LAS files into GeoTIFF raster files."
 readme = "README.md"
 authors = [
