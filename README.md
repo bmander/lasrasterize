@@ -12,6 +12,12 @@ cd lasrasterize
 pip install .
 ```
 
+Alternatively, install from the python package index:
+
+```bash
+pip install lasrasterize
+```
+
 ## Usage
 
 Consult the `lasrasterize` help:
