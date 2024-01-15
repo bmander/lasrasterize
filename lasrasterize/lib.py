@@ -345,8 +345,6 @@ def lasfile_to_geotiff(
         yres (int | float | None, optional): The resolution in the y
           direction, in map units. If None, the resolution will be inferred
           from the LAS file. Defaults to None.
-        fill_radius (int, optional): The radius to use when filling holes, in
-          pixels.
         crs (str, optional): The CRS of the output GeoTiff. If None, the CRS
           will be inferred from the LAS file. Defaults to None.
 
