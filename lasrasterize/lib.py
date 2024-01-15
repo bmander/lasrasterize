@@ -120,12 +120,14 @@ def points_to_raster(
 ) -> np.ndarray:
 
     if strategy == "gridandfill":
+        fill_holes = kwargs.get("fill_holes", True)
+        fill_radius = kwargs.get("fill_radius", 2)
         return points_to_raster_grid_and_fill(points, origin,
                                               width, height, xres, yres,
-                                              **kwargs)
-    elif strategy == "interpolate":
+                                              fill_holes, fill_radius)
+    elif strategy in ("nearest", "linear", "cubic"):
         return points_to_raster_interpolate(points, origin,
-                                            width, height, **kwargs)
+                                            width, height, method=strategy)
     else:
         raise ValueError("Invalid strategy: '{}'".format(strategy))
 
@@ -285,8 +287,8 @@ def lasdata_to_rasters(
         layer_defs (Iterable[Laslayer_definition]): An iterable of
           Laslayer_definition objects, each defining a layer to output.
         strategy (str, optional): The strategy to use when converting points.
-          Can be either "gridandfill" or "interpolate". Defaults to
-          "gridandfill".
+          Choices are "gridandfill", "nearest", "linear", or "cubic". Defaults
+          to "gridandfill".
         **kwargs: Additional keyword arguments to pass to the strategy
 
     Returns:

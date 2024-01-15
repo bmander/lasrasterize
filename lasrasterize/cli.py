@@ -101,7 +101,6 @@ def main():
         layer_defs,
         args.xres,
         args.yres,
-        args.fill_radius,
         args.crs,
     )
 
