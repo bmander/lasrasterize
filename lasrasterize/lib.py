@@ -260,8 +260,8 @@ def lasdata_to_rasters(
     xres: Union[int, float],
     yres: Union[int, float],
     layer_defs: Iterable[Layerdef],
-    fill_holes: bool = True,
-    fill_radius: int = 2,
+    strategy: str = "gridandfill",
+    **kwargs
 ) -> np.ndarray:
     """Converts a lasdata object to a raster.
 
@@ -275,10 +275,10 @@ def lasdata_to_rasters(
         yres (int | float): The resolution in the y direction, in map units.
         layer_defs (Iterable[Laslayer_definition]): An iterable of
           Laslayer_definition objects, each defining a layer to output.
-        fill_holes (bool, optional): Whether to fill holes in the raster.
-          Defaults to True.
-        fill_radius (int, optional): The radius to use when filling holes, in
-          pixels.
+        strategy (str, optional): The strategy to use when converting points.
+          Can be either "gridandfill" or "interpolate". Defaults to
+          "gridandfill".
+        **kwargs: Additional keyword arguments to pass to the strategy
 
     Returns:
         np.ndarray: An float array containing the elevation or intensity
@@ -316,8 +316,7 @@ def lasdata_to_rasters(
             xres,
             yres,
             strategy="gridandfill",
-            fill_holes=fill_holes,
-            fill_radius=fill_radius,
+            **kwargs
         )
 
         rasters[k] = raster
