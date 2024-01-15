@@ -48,6 +48,7 @@ def main():
         required=True,
         action="append",
         type=str,
+        choices=["elev", "intensity"],
         help="Theme(s) to inclide. Choices are 'elev' and 'intensity'.",
     )
     parser.add_argument(
