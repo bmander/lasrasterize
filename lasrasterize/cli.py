@@ -106,6 +106,12 @@ def main():
             "The number of return numbers must match the number of themes."
         )
 
+    # if either xres or yres is specified, both must be specified
+    if args.xres is not None and args.yres is None:
+        raise ValueError("If xres is specified, yres must also be specified.")
+    if args.xres is None and args.yres is not None:
+        raise ValueError("If yres is specified, xres must also be specified.")
+
     layer_defs = []
     for return_num, theme in zip(args.return_num, args.theme):
         if theme not in ("elev", "intensity"):
