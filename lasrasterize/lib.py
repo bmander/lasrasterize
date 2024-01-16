@@ -1,5 +1,5 @@
 from collections import namedtuple
-from math import ceil
+from math import ceil, floor
 from typing import Iterable, Optional, Tuple, Union
 
 import laspy
@@ -381,14 +381,19 @@ def lasfile_to_geotiff(
     if xres is None or yres is None:
         xres = yres = infer_raster_resolution(lasdata)
 
-    width = int(ceil((lasdata.header.x_max - lasdata.header.x_min) / xres))
-    height = int(ceil((lasdata.header.y_max - lasdata.header.y_min) / yres))
+    # the origin is an integer multiple of the resolution that is to the upper
+    # left of the bounding box of the LAS file
+    left = xres * floor(lasdata.header.x_min / xres)
+    top = yres * ceil(lasdata.header.y_max / yres)
+
+    width = int(ceil((lasdata.header.x_max - left) / xres))
+    height = int(ceil((top - lasdata.header.y_min) / yres))
 
     if crs is None:
         crs = lasdata.header.parse_crs()
 
     if not dry_run:
-        origin = (lasdata.header.x_min, lasdata.header.y_max)
+        origin = (left, top)
         rasters = lasdata_to_rasters(lasdata, origin, width, height, xres,
                                      yres, layer_defs, strategy, **kwargs)
 
