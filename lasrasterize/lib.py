@@ -385,6 +385,7 @@ def lasfile_to_geotiff(
     # left of the bounding box of the LAS file
     left = xres * floor(lasdata.header.x_min / xres)
     top = yres * ceil(lasdata.header.y_max / yres)
+    origin = (left, top)
 
     width = int(ceil((lasdata.header.x_max - left) / xres))
     height = int(ceil((top - lasdata.header.y_min) / yres))
@@ -393,7 +394,6 @@ def lasfile_to_geotiff(
         crs = lasdata.header.parse_crs()
 
     if not dry_run:
-        origin = (left, top)
         rasters = lasdata_to_rasters(lasdata, origin, width, height, xres,
                                      yres, layer_defs, strategy, **kwargs)
 
