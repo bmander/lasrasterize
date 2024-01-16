@@ -18,7 +18,7 @@ def main():
         epilog="Examples: \n"
         "\tlasrasterize --crs epsg:2285 -n 1 -t elev -n -1 -t elev -n -1 -t "
         "intensity /path/to/lasfile.las /path/to/raster.tif\n"
-        "  - Create a GeoTIFF with three layers: the first return elevation, "
+        "\t\t- Create a GeoTIFF with three layers: the first return elevation, "
         "the last return elevation, and the last return intensity.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
