@@ -124,7 +124,7 @@ def main():
             )
         )
 
-    xres, yres, width, height, crs = lasfile_to_geotiff(
+    xres, yres, width, height, origin, crs = lasfile_to_geotiff(
         args.file_in,
         args.file_out,
         layer_defs,
@@ -146,6 +146,7 @@ def main():
         print(f"  Height: {height} pixels")
         print(f"  X resolution: {xres}")
         print(f"  Y resolution: {yres}")
+        print(f"  Origin: {origin}")
         print(f"  Number of bands: {len(layer_defs)}")
 
 

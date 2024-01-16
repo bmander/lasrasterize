@@ -397,8 +397,7 @@ def lasfile_to_geotiff(
         rasters = lasdata_to_rasters(lasdata, origin, width, height, xres,
                                      yres, layer_defs, strategy, **kwargs)
 
-        transform = rio.transform.from_origin(lasdata.header.x_min,
-                                              lasdata.header.y_max, xres, yres)
+        transform = rio.transform.from_origin(left, top, xres, yres)
 
         with rio.open(
             geotiff_filename,
@@ -416,4 +415,4 @@ def lasfile_to_geotiff(
             for i, layer in enumerate(rasters):
                 new_dataset.write(layer, i + 1)
 
-    return xres, yres, width, height, crs
+    return xres, yres, width, height, origin, crs
