@@ -344,6 +344,7 @@ def lasfile_to_geotiff(
     yres: Optional[Union[int, float]] = None,
     crs: str = None,
     strategy: str = "gridandfill",
+    dry_run: bool = False,
     **kwargs
 ) -> None:
     """Converts a LAS file to a GeoTiff.
@@ -361,6 +362,10 @@ def lasfile_to_geotiff(
           from the LAS file. Defaults to None.
         crs (str, optional): The CRS of the output GeoTiff. If None, the CRS
           will be inferred from the LAS file. Defaults to None.
+        strategy (str, optional): The strategy to use when converting points.
+            Choices are "gridandfill", "nearest", "linear", or "cubic".
+            Defaults to "gridandfill".
+        dry_run (bool, optional): If True, the output file will not be written.
 
     Raises:
         ValueError: If xres or yres is negative.
@@ -378,29 +383,32 @@ def lasfile_to_geotiff(
 
     width = int(ceil((lasdata.header.x_max - lasdata.header.x_min) / xres))
     height = int(ceil((lasdata.header.y_max - lasdata.header.y_min) / yres))
-    origin = (lasdata.header.x_min, lasdata.header.y_max)
-    rasters = lasdata_to_rasters(lasdata, origin, width, height, xres, yres,
-                                 layer_defs, strategy, **kwargs)
 
     if crs is None:
         crs = lasdata.header.parse_crs()
 
-    transform = rio.transform.from_origin(lasdata.header.x_min,
-                                          lasdata.header.y_max, xres, yres)
-    n_layers = len(layer_defs)
+    if not dry_run:
+        origin = (lasdata.header.x_min, lasdata.header.y_max)
+        rasters = lasdata_to_rasters(lasdata, origin, width, height, xres,
+                                     yres, layer_defs, strategy, **kwargs)
 
-    with rio.open(
-        geotiff_filename,
-        "w",
-        driver="GTiff",
-        height=height,
-        width=width,
-        count=n_layers,
-        dtype=np.float32,
-        crs=crs,
-        transform=transform,
-        compress="lzw",
-        nodata=np.nan,
-    ) as new_dataset:
-        for i, layer in enumerate(rasters):
-            new_dataset.write(layer, i + 1)
+        transform = rio.transform.from_origin(lasdata.header.x_min,
+                                              lasdata.header.y_max, xres, yres)
+
+        with rio.open(
+            geotiff_filename,
+            "w",
+            driver="GTiff",
+            height=height,
+            width=width,
+            count=len(layer_defs),
+            dtype=np.float32,
+            crs=crs,
+            transform=transform,
+            compress="lzw",
+            nodata=np.nan,
+        ) as new_dataset:
+            for i, layer in enumerate(rasters):
+                new_dataset.write(layer, i + 1)
+
+    return xres, yres, width, height, crs

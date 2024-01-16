@@ -86,6 +86,17 @@ def main():
         help="Fill raster holes with average values within FILL_RADIUS "
         "pixels.",
     )
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Print the properties of the output GeoTIFF without creating it."
+    )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress all output."
+    )
 
     args = parser.parse_args()
 
@@ -107,7 +118,7 @@ def main():
             )
         )
 
-    lasfile_to_geotiff(
+    xres, yres, width, height, crs = lasfile_to_geotiff(
         args.file_in,
         args.file_out,
         layer_defs,
@@ -115,8 +126,21 @@ def main():
         args.yres,
         args.crs,
         args.strategy,
+        args.dryrun,
         fill_radius=args.fill_radius,
     )
+
+    if not args.quiet:
+        if args.dryrun:
+            print("GeoTIFF raster would have the following properties:")
+        else:
+            print("Created GeoTIFF raster with the following properties:")
+        print(f"  CRS: {crs}")
+        print(f"  Width: {width} pixels")
+        print(f"  Height: {height} pixels")
+        print(f"  X resolution: {xres}")
+        print(f"  Y resolution: {yres}")
+        print(f"  Number of bands: {len(layer_defs)}")
 
 
 if __name__ == "__main__":
